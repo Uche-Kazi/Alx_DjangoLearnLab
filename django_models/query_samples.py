@@ -2,10 +2,13 @@ import os
 import sys
 import django
 
+# Add the project root directory to the Python path.
+# This is necessary for standalone scripts to find the 'LibraryProject' settings.
+# The script is in django_models/query_samples.py, so its parent is django_models,
+# and the parent of that is the project root (Alx_DjangoLearnLab).
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Set up Django environment
-# Note: The settings module is now LibraryProject.settings, as manage.py is at the root.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'LibraryProject.settings')
 django.setup()
 
