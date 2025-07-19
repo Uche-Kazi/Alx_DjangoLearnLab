@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'LibraryProject.settings')
+    # CRITICAL: Settings module now points to the inner project package
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'library_project.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
