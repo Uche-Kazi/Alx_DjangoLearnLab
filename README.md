@@ -1,15 +1,15 @@
 Alx_DjangoLearnLab
 This repository serves as a learning lab for Django, focusing on fundamental concepts such as project structure, model definitions, and database migrations.
 
-It contains a Django project named django_models which includes a relationship_app designed to demonstrate various Django model relationships (ForeignKey, ManyToMany, OneToOne).
+It contains a Django project named django-models which includes a relationship_app designed to demonstrate various Django model relationships (ForeignKey, ManyToMany, OneToOne).
 
 Project Structure
-The core Django project resides within the django_models/ directory.
+The core Django project resides within the django-models/ directory.
 
 Alx_DjangoLearnLab/
-├── django_models/
+├── django-models/              # Main Django project root
 │   ├── manage.py
-│   ├── library_project/        # Main project configuration (settings, URLs)
+│   ├── LibraryProject/         # Main project configuration (settings, URLs)
 │   │   ├── settings.py
 │   │   ├── urls.py
 │   │   └── ...
@@ -37,7 +37,7 @@ pip install Django==5.2.4
 
 Navigate into the Django project directory:
 
-cd django_models
+cd django-models
 
 Run database migrations:
 

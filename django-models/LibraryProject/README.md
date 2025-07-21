@@ -1,5 +1,5 @@
 Library Project Configuration
-This library_project directory is the main configuration package for the Django project. It contains essential project-wide settings and URL routing.
+This LibraryProject directory is the main configuration package for the Django project. It contains essential project-wide settings and URL routing.
 
 Contents
 settings.py: Defines all Django project settings, including database configuration, installed applications, middleware, and static files.

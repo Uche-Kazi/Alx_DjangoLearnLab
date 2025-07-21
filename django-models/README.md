@@ -1,10 +1,10 @@
 Django Models Project
-This directory serves as the root for the Django project. It contains the main manage.py script for interacting with the project, the primary library_project configuration package, and the relationship_app which defines the application's models and query examples.
+This directory serves as the root for the Django project. It contains the main manage.py script for interacting with the project, the primary LibraryProject configuration package, and the relationship_app which defines the application's models and query examples.
 
 Structure Overview
-django_models/
+django-models/
 ├── manage.py               # Django's command-line utility
-├── library_project/        # Core project configuration (settings, URLs, WSGI/ASGI)
+├── LibraryProject/         # Core project configuration (settings, URLs, WSGI/ASGI)
 │   ├── settings.py
 │   ├── urls.py
 │   └── ...

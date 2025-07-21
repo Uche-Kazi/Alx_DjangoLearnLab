@@ -13,7 +13,7 @@ Librarian: Represents librarians, with a OneToOne relationship to Library.
 Query Samples
 The query_samples.py file provides examples of how to interact with these models using Django's ORM (Object-Relational Mapper) to retrieve data based on the defined relationships.
 
-To test these queries, navigate to the django_models/ directory in your terminal and run:
+To test these queries, navigate to the django-models/ directory in your terminal and run:
 
 python manage.py shell
 

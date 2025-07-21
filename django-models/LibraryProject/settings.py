@@ -1,11 +1,11 @@
 """
-Django settings for library_project project.
+Django settings for LibraryProject project.
 """
 
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR now points to the outer django_models directory (the project root).
+# BASE_DIR now points to the outer django-models directory (the project root).
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'relationship_app', # CRITICAL: This is the app name
+    'relationship_app', # CRITICAL: This is the new app name
 ]
 
 MIDDLEWARE = [
@@ -34,9 +34,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ROOT_URLCONF and WSGI_APPLICATION refer to the inner library_project package
-ROOT_URLCONF = 'library_project.urls'
-WSGI_APPLICATION = 'library_project.wsgi.application'
+# ROOT_URLCONF and WSGI_APPLICATION refer to the inner LibraryProject package
+ROOT_URLCONF = 'LibraryProject.urls'
+WSGI_APPLICATION = 'LibraryProject.wsgi.application'
 
 TEMPLATES = [
     {
