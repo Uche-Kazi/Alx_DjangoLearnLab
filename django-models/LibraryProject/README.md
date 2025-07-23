@@ -1,18 +1,13 @@
-Library Project Configuration
-This LibraryProject directory is the main configuration package for the Django project. It contains essential project-wide settings and URL routing.
+Intermediate Library Project Folder
+This LibraryProject directory acts as an intermediate container within the django-models project root. It holds the main Django project configuration (the inner LibraryProject package) and the custom applications, such as relationship_app.
+
+This specific nesting is based on a successful project structure for the "Implementing Advanced Model Relationships in Django" task.
 
 Contents
-settings.py: Defines all Django project settings, including database configuration, installed applications, middleware, and static files.
+LibraryProject/: The inner Django project package containing settings.py, urls.py, etc., and now also containing the relationship_app.
 
-urls.py: Manages the main URL routing for the entire Django project.
+(Other potential app folders like bookshelf/, templates/ if copied from previous tasks)
 
-wsgi.py: Entry point for WSGI-compatible web servers to serve your project.
-
-asgi.py: Entry point for ASGI-compatible web servers (e.g., for websockets).
-
-__init__.py: Marks this directory as a Python package.
-
-Important Notes
-Modifications to project-wide behavior or adding new apps should often involve changes within settings.py.
-
-App-specific URLs can be included from this urls.py file.
+Structure Context
+This folder is part of the following path within the repository:
+Alx_DjangoLearnLab/django-models/LibraryProject/

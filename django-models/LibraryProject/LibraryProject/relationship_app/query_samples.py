@@ -1,8 +1,9 @@
 # Import the models from your relationship_app
 # Assume Django environment (including models) is already set up by the checker.
-from relationship_app.models import Author, Book, Library, Librarian
+# The app is now nested: LibraryProject.LibraryProject.relationship_app
+from LibraryProject.LibraryProject.relationship_app.models import Author, Book, Library, Librarian
 
-# Query all books by a specific author (ForeignKey)
+# Query all books by a specific author
 def books_by_author(author_name):
     """
     Retrieves all books written by a specific author.
@@ -18,7 +19,7 @@ def books_by_author(author_name):
         # Return an empty queryset if the author is not found
         return Book.objects.none()
 
-# List all books in a specific library (ManyToMany)
+# List all books in a specific library
 def books_in_library(library_name):
     """
     Retrieves all books available in a specific library.
@@ -34,7 +35,7 @@ def books_in_library(library_name):
         # Return an empty queryset if the library is not found
         return Book.objects.none()
 
-# Retrieve the librarian for a specific library (OneToOne)
+# Retrieve the librarian for a specific library
 def librarian_for_library(library_name):
     """
     Retrieves the librarian assigned to a specific library.

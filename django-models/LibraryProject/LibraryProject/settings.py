@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # BASE_DIR now points to the outer django-models directory (the project root).
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'relationship_app', # CRITICAL: This is the new app name
+    'LibraryProject.LibraryProject.relationship_app', # CRITICAL: App name is now deeply nested
 ]
 
 MIDDLEWARE = [
@@ -35,8 +35,8 @@ MIDDLEWARE = [
 ]
 
 # ROOT_URLCONF and WSGI_APPLICATION refer to the inner LibraryProject package
-ROOT_URLCONF = 'LibraryProject.urls'
-WSGI_APPLICATION = 'LibraryProject.wsgi.application'
+ROOT_URLCONF = 'LibraryProject.LibraryProject.urls'
+WSGI_APPLICATION = 'LibraryProject.LibraryProject.wsgi.application'
 
 TEMPLATES = [
     {
