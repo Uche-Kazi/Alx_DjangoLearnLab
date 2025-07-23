@@ -8,11 +8,11 @@ django-models/
 │   ├── LibraryProject/     # Core project configuration (settings, URLs, WSGI/ASGI)
 │   │   ├── settings.py
 │   │   ├── urls.py
-│   │   ├── relationship_app/   # Custom Django application (TRIPLE NESTED)
-│   │   │   ├── models.py
-│   │   │   ├── query_samples.py
-│   │   │   └── ...
 │   │   └── ...
+│   └── relationship_app/   # Custom Django application
+│       ├── models.py
+│       ├── query_samples.py
+│       └── ...
 ├── README.md               # This file
 └── ... (other files like db.sqlite3, .gitignore, etc.)
 
@@ -25,5 +25,5 @@ All Django management commands should be run from this directory (where manage.p
 Example:
 
 python manage.py runserver
-python manage.py makemigrations LibraryProject.LibraryProject.relationship_app
+python manage.py makemigrations relationship_app
 python manage.py migrate

@@ -4,7 +4,9 @@ This LibraryProject directory acts as an intermediate container within the djang
 This specific nesting is based on a successful project structure for the "Implementing Advanced Model Relationships in Django" task.
 
 Contents
-LibraryProject/: The inner Django project package containing settings.py, urls.py, etc., and now also containing the relationship_app.
+LibraryProject/: The inner Django project package containing settings.py, urls.py, etc.
+
+relationship_app/: The Django application defining models and queries for relationships, located as a sibling to the inner LibraryProject package.
 
 (Other potential app folders like bookshelf/, templates/ if copied from previous tasks)
 

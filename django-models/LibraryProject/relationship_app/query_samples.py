@@ -1,7 +1,7 @@
 # Import the models from your relationship_app
 # Assume Django environment (including models) is already set up by the checker.
-# The app is now nested: LibraryProject.LibraryProject.relationship_app
-from LibraryProject.LibraryProject.relationship_app.models import Author, Book, Library, Librarian
+# The app is now nested: LibraryProject.relationship_app
+from LibraryProject.relationship_app.models import Author, Book, Library, Librarian
 
 # Query all books by a specific author
 def books_by_author(author_name):

@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'LibraryProject.LibraryProject.relationship_app', # CRITICAL: App name is now deeply nested
+    'LibraryProject.relationship_app', # CRITICAL: App name is now less nested
 ]
 
 MIDDLEWARE = [
