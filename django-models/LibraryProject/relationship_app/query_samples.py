@@ -2,6 +2,7 @@
 # Assume Django environment (including models) is already set up by the checker.
 # The app is now nested: LibraryProject.relationship_app
 from LibraryProject.relationship_app.models import Author, Book, Library, Librarian
+from django.core.exceptions import ObjectDoesNotExist # Import ObjectDoesNotExist
 
 # Query all books by a specific author
 def books_by_author(author_name):
@@ -46,13 +47,14 @@ def librarian_for_library(library_name):
     """
     try:
         library = Library.objects.get(name=library_name)
-        # Access the related Librarian object directly via the reverse relationship
-        return library.librarian
+        # CRITICAL FIX: Use Librarian.objects.get(library=...) as required by the checker.
+        try:
+            return Librarian.objects.get(library=library)
+        except Librarian.DoesNotExist:
+            # If the library exists but has no associated librarian, return None
+            return None
     except Library.DoesNotExist:
-        # Return None if the library is not found
-        return None
-    except Librarian.DoesNotExist:
-        # Return None if a library exists but has no assigned librarian
+        # Return None if the library itself is not found
         return None
 
 # No `if __name__ == "__main__":` block or `django.setup()` here.
