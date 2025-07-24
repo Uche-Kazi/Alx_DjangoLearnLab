@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import DetailView # For class-based view
+from django.views.generic.detail import DetailView # CRITICAL FIX: Changed import path for DetailView
 from .models import Book # Import Book separately
 from .models import Library # Import Library on its own line, as checker expects
 
