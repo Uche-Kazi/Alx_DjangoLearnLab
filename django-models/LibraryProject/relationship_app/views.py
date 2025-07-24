@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, CreateView
-from django.contrib.auth import logout, login
+from django.contrib.auth import logout, login # Ensure 'login' is imported here
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm # Import UserCreationForm
 from django.urls import reverse_lazy
 
 from .models import Book
@@ -40,7 +40,6 @@ class RegisterView(CreateView):
     """
     template_name = 'relationship_app/register.html'
     form_class = UserRegistrationForm
-    # CRITICAL FIX: Use namespaced URL for login
     success_url = reverse_lazy('relationship_app:login')
 
 # User Login View - Added debugging methods
@@ -51,7 +50,6 @@ class CustomLoginView(LoginView):
     """
     template_name = 'relationship_app/login.html'
     authentication_form = AuthenticationForm
-    # CRITICAL FIX: Use namespaced URL for book_list
     next_page = reverse_lazy('relationship_app:book_list')
 
     def form_valid(self, form):
@@ -78,6 +76,5 @@ def custom_logout_view(request):
     """
     if request.method == 'POST':
         logout(request)
-        # CRITICAL FIX: Use namespaced URL for login
         return redirect(reverse_lazy('relationship_app:login'))
     return redirect(reverse_lazy('relationship_app:login'))
