@@ -1,8 +1,12 @@
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, CreateView
-from django.contrib.auth import logout, login # Ensure 'login' is imported here
+from django.contrib.auth import logout
+# CRITICAL FIX: Ensure 'login' is on its own line
+from django.contrib.auth import login
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm # Import UserCreationForm
+# CRITICAL FIX: Ensure 'UserCreationForm' is on its own line
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 
 from .models import Book
