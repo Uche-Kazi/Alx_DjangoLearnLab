@@ -1,0 +1,21 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    {% load static %} {# Load the static files tag library #}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Login</h1>
+    {# The form tag is crucial for making the login button functional #}
+    <form method="post">
+        {% csrf_token %} {# Django's security token for POST requests #}
+        {{ form.as_p }} {# Renders form fields as paragraphs, including any errors #}
+        <button type="submit">Login</button> {# This is your clickable login button #}
+    </form>
+    {# This is your clickable register link #}
+    <a href="{% url 'register' %}">Register</a>
+</body>
+</html>

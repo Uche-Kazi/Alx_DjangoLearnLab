@@ -15,11 +15,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include # Import include
+from django.urls import path, include # Ensure 'include' is imported
+
+# CRITICAL FIX: Import custom_logout_view instead of CustomLogoutView
+from LibraryProject.relationship_app.views import RegisterView, CustomLoginView, custom_logout_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Include URLs from your relationship_app
-    # This means URLs like /app_name/books/ and /app_name/libraries/1/ will now work
-    path('library_app/', include('LibraryProject.relationship_app.urls', namespace='relationship_app')),
+    path('library_app/', include('LibraryProject.relationship_app.urls')), # This includes your existing app URLs
+
+    # Add the authentication URLs directly here
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', CustomLoginView.as_view(), name='login'),
+    # CRITICAL FIX: Use the function-based view directly
+    path('logout/', custom_logout_view, name='logout'),
 ]
