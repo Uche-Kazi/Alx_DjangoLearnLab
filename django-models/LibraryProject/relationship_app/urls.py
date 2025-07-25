@@ -13,8 +13,8 @@ urlpatterns = [
     path('libraries/<int:pk>/', views.LibraryDetailView.as_view(), name='library_detail'), # Refer to LibraryDetailView via views.
 
     # New Authentication URL patterns
-    # Using RegisterView from your app's views, now explicitly via 'views.RegisterView'
-    path('register/', views.RegisterView.as_view(), name='register'),
+    # Using function-based register view
+    path('register/', views.register, name='register'), # CRITICAL FIX: Changed to views.register
     
     # Using Django's built-in LoginView directly with template_name
     path('login/', LoginView.as_view(template_name='relationship_app/login.html'), name='login'),
