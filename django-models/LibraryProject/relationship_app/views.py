@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect
-from django.views.generic import DetailView
-from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import DetailView, CreateView
+from django.contrib.auth import logout
+# CRITICAL FIX: Ensure 'login' is on its own line
+from django.contrib.auth import login
+from django.contrib.auth.views import LoginView
+# CRITICAL FIX: Ensure 'UserCreationForm' is on its own line
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
-from django.contrib.auth import login # Ensure login is available for function-based register
 
 from .models import Book
 from .models import Library
-from .forms import UserRegistrationForm # Our custom registration form
+from .forms import UserRegistrationForm
 
 # Function-based view to list all books
 def list_books(request):
@@ -32,24 +36,17 @@ class LibraryDetailView(DetailView):
     template_name = 'relationship_app/library_detail.html'
     context_object_name = 'library'
 
-# User Registration View (Now function-based)
-def register(request): # Changed from class RegisterView to function register
+# User Registration View
+class RegisterView(CreateView):
     """
-    Function-based view for user registration.
-    Handles the UserRegistrationForm and logs the user in upon success.
+    Class-based view for user registration.
+    Uses UserRegistrationForm to create a new user.
     """
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user) # Log the user in after registration
-            return redirect(reverse_lazy('relationship_app:book_list')) # Redirect to book list after login
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'relationship_app/register.html', {'form': form})
+    template_name = 'relationship_app/register.html'
+    form_class = UserRegistrationForm
+    success_url = reverse_lazy('relationship_app:login')
 
-
-# User Login View
+# User Login View - Added debugging methods
 class CustomLoginView(LoginView):
     """
     Custom class-based view for user login.
@@ -59,10 +56,29 @@ class CustomLoginView(LoginView):
     authentication_form = AuthenticationForm
     next_page = reverse_lazy('relationship_app:book_list')
 
+    def form_valid(self, form):
+        """
+        This method is called when the login form is submitted with valid data.
+        It logs the user in and redirects to the success URL.
+        """
+        print("Login form is VALID. Attempting to log in user...")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """
+        This method is called when the login form is submitted with invalid data.
+        It re-renders the form with errors.
+        """
+        print("Login form is INVALID. Errors:", form.errors)
+        return super().form_invalid(form)
+
 # User Logout View
-class CustomLogoutView(LogoutView):
+def custom_logout_view(request):
     """
-    Custom class-based view for user logout.
-    Uses Django's built-in LogoutView.
+    Handles user logout.
+    Logs out the user and redirects to the login page.
     """
-    next_page = reverse_lazy('relationship_app:login')
+    if request.method == 'POST':
+        logout(request)
+        return redirect(reverse_lazy('relationship_app:login'))
+    return redirect(reverse_lazy('relationship_app:login'))
