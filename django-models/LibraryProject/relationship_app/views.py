@@ -31,11 +31,20 @@ def _get_or_create_user_profile(user):
     return user_profile
 
 def is_admin(user):
-    """Checks if the user has the 'Admin' role in their UserProfile."""
+    """
+    Checks if the user has the 'Admin' role in their UserProfile
+    OR if they are a Django superuser.
+    """
     if not user.is_authenticated:
         print(f"DEBUG: is_admin called for unauthenticated user. Returning False.")
         return False
     
+    # First, check if the user is a Django superuser
+    if user.is_superuser:
+        print(f"DEBUG: is_admin called for {user.username}. User is a superuser. Returning True.")
+        return True # Superusers automatically have all permissions
+
+    # If not a superuser, check their UserProfile role
     user_profile = _get_or_create_user_profile(user)
     result = user_profile.role == UserProfile.ADMIN
     print(f"DEBUG: is_admin called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Admin: {result}")
@@ -144,7 +153,7 @@ def dashboard(request):
 
 # --- Role-Based Dashboard Views ---
 
-# Reverting to user_passes_test with settings.LOGIN_URL for checker compatibility
+# Using user_passes_test with settings.LOGIN_URL for checker compatibility
 @user_passes_test(is_admin, login_url=settings.LOGIN_URL)
 def admin_view(request):
     """
@@ -167,8 +176,6 @@ def member_view(request):
     return render(request, 'member_view.html')
 
 # --- Error Page for Unauthorized Access ---
-# This page will now primarily be used if you explicitly redirect to it,
-# as user_passes_test will redirect to LOGIN_URL instead.
 def error_page(request):
     """Renders a generic error page for unauthorized access."""
     return render(request, 'error_page.html', {'message': 'You do not have permission to access this page.'})
