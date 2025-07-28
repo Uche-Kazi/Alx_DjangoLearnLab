@@ -1,0 +1,65 @@
+    {# LibraryProject/relationship_app/templates/member/my_borrowed_books.html #}
+
+    {% extends 'relationship_app/base.html' %}
+
+    {% block title %}My Borrowed Books{% endblock %}
+
+    {% block content %}
+    <div class="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+        <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">My Borrowed Books</h2>
+
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if borrowed_loans %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Book Title</th>
+                        <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Loan Date</th>
+                        <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Due Date</th>
+                        <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for loan in borrowed_loans %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900">{{ loan.book.title }}</td>
+                        <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">{{ loan.loan_date|date:"M d, Y" }}</td>
+                        <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">
+                            {% if loan.due_date %}
+                                {{ loan.due_date|date:"M d, Y" }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 whitespace-nowrap text-sm">
+                            {% if loan.return_date %}
+                                <span class="text-green-600">Returned</span>
+                            {% else %}
+                                <span class="text-red-600">Active</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="text-center text-gray-600 text-lg">You currently have no borrowed books.</p>
+        {% endif %}
+
+        <p class="text-center text-gray-600 text-sm mt-6">
+            <a href="{% url 'relationship_app:member_dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Member Dashboard</a>
+        </p>
+    </div>
+    {% endblock %}
+    

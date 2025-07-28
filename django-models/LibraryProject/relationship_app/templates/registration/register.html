@@ -1,0 +1,33 @@
+<!-- LibraryProject/relationship_app/templates/registration/register.html -->
+
+{% extends 'relationship_app/base.html' %} {# <-- FIX THIS LINE #}
+{% load crispy_forms_tags %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Register Account</h2>
+
+    {% if messages %}
+        <ul class="mb-4">
+            {% for message in messages %}
+                <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        {{ form|crispy }} {# Render form fields with crispy-forms for nice styling #}
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">
+            Register
+        </button>
+    </form>
+    <p class="text-center text-gray-600 text-sm mt-6">
+        Already have an account? <a href="{% url 'relationship_app:login' %}" class="text-blue-600 hover:underline font-medium">Login here</a>.
+    </p>
+</div>
+{% endblock %}

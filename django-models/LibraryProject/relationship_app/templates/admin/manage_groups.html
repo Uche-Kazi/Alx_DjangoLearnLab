@@ -1,0 +1,23 @@
+{# LibraryProject/relationship_app/templates/admin/manage_groups.html #}
+
+{% extends 'relationship_app/base.html' %} {# Ensure this extends the correct base #}
+
+{% block title %}Manage Groups{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200 text-center">
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Manage Groups</h2>
+    <p class="text-lg text-gray-700 mb-8">Here you can manage Django's built-in user groups.</p>
+
+    <div class="space-y-4">
+        <a href="{% url 'admin:auth_group_changelist' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
+            Go to Django Admin Groups
+        </a>
+        {# You could add custom group management forms/lists here if desired #}
+    </div>
+
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:admin_dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Admin Dashboard</a>
+    </p>
+</div>
+{% endblock %}

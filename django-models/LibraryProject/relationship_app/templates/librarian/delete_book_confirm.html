@@ -1,0 +1,23 @@
+{# LibraryProject/relationship_app/templates/librarian/delete_book_confirm.html #}
+
+{% extends 'relationship_app/base.html' %}
+
+{% block title %}Confirm Delete Book{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200 text-center">
+    <h2 class="text-3xl font-extrabold text-red-700 mb-6">Confirm Delete</h2>
+    <p class="text-lg text-gray-700 mb-8">Are you sure you want to delete the book: **"{{ book.title }}"** by {{ book.author }}?</p>
+    <p class="text-md text-gray-600 mb-8">This action cannot be undone.</p>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">
+            Yes, Delete Book
+        </button>
+        <a href="{% url 'relationship_app:manage_books' %}" class="inline-block w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

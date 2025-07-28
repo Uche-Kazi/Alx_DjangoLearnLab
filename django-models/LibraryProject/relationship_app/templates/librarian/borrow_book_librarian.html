@@ -1,0 +1,50 @@
+{# LibraryProject/relationship_app/templates/librarian/borrow_book_librarian.html #}
+
+{% extends 'relationship_app/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Borrow Book{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Borrow Book for Member</h2>
+
+    {% if messages %}
+        <ul class="mb-4">
+            {% for message in messages %}
+                <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="id_book" class="block text-gray-700 text-sm font-bold mb-2">Select Book:</label>
+            <select name="book_id" id="id_book" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" required>
+                <option value="">-- Select a book --</option>
+                {% for book in books %}
+                    <option value="{{ book.id }}">{{ book.title }} by {{ book.author }} (Available: {{ book.available_copies }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-4">
+            <label for="id_member" class="block text-gray-700 text-sm font-bold mb-2">Select Member:</label>
+            <select name="member_id" id="id_member" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" required>
+                <option value="">-- Select a member --</option>
+                {% for member in members %}
+                    <option value="{{ member.id }}">{{ member.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">
+            Issue Loan
+        </button>
+    </form>
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:handle_loans' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Handle Loans</a>
+    </p>
+</div>
+{% endblock %}

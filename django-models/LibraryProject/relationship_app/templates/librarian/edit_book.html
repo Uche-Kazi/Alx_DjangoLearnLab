@@ -1,0 +1,59 @@
+{# LibraryProject/relationship_app/templates/librarian/edit_book.html #}
+
+{% extends 'relationship_app/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Book{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Edit Book: "{{ book.title }}"</h2>
+
+    {% if messages %}
+        <ul class="mb-4">
+            {% for message in messages %}
+                <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        {# Manual rendering for simplicity, you could create a BookForm in forms.py and use crispy #}
+        <div class="mb-4">
+            <label for="id_title" class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
+            <input type="text" name="title" id="id_title" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.title }}" required>
+        </div>
+        <div class="mb-4">
+            <label for="id_author" class="block text-gray-700 text-sm font-bold mb-2">Author Name:</label>
+            <input type="text" name="author" id="id_author" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.author.name }}" required>
+        </div>
+        <div class="mb-4">
+            <label for="id_isbn" class="block text-gray-700 text-sm font-bold mb-2">ISBN:</label>
+            <input type="text" name="isbn" id="id_isbn" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.isbn|default:"" }}">
+            <p class="text-xs text-gray-500 mt-1">Optional, 13 digits.</p>
+        </div>
+        <div class="mb-4">
+            <label for="id_published_date" class="block text-gray-700 text-sm font-bold mb-2">Published Date:</label>
+            <input type="date" name="published_date" id="id_published_date" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.published_date|date:'Y-m-d' }}">
+        </div>
+        <div class="mb-4">
+            <label for="id_available_copies" class="block text-gray-700 text-sm font-bold mb-2">Available Copies:</label>
+            <input type="number" name="available_copies" id="id_available_copies" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.available_copies }}" min="0" required>
+        </div>
+        <div class="mb-4">
+            <label for="id_total_copies" class="block text-gray-700 text-sm font-bold mb-2">Total Copies:</label>
+            <input type="number" name="total_copies" id="id_total_copies" class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" value="{{ book.total_copies }}" min="0" required>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">
+            Update Book
+        </button>
+    </form>
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:manage_books' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Manage Books</a>
+    </p>
+</div>
+{% endblock %}
