@@ -13,6 +13,7 @@ from .forms import CustomUserCreationForm, UserRoleAssignmentForm
 from .models import UserProfile, Book, Loan, Author
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings # Import settings
 
 # --- Helper functions for role checking ---
 def _get_or_create_user_profile(user):
@@ -61,6 +62,25 @@ def is_member(user):
 def is_any_role(user):
     """Checks if the user belongs to any of the defined roles."""
     return is_admin(user) or is_librarian(user) or is_member(user)
+
+# Custom decorator to handle unauthorized access for logged-in users
+def role_required(test_func, redirect_url='relationship_app:error_page'):
+    """
+    Decorator for views that checks if a user passes a given test,
+    redirecting to a specified URL if they are authenticated but unauthorized,
+    or to LOGIN_URL if not authenticated.
+    """
+    def decorator(view_func):
+        @login_required(login_url=settings.LOGIN_URL) # Redirect to login if not authenticated
+        def _wrapped_view(request, *args, **kwargs):
+            if test_func(request.user):
+                return view_func(request, *args, **kwargs)
+            else:
+                messages.error(request, 'You do not have permission to access this page.')
+                return redirect(redirect_url)
+        return _wrapped_view
+    return decorator
+
 
 # --- Custom Registration View ---
 class RegisterView(CreateView):
@@ -143,24 +163,21 @@ def dashboard(request):
 
 # --- Role-Based Dashboard Views ---
 
-@login_required
-@user_passes_test(is_admin, login_url='relationship_app:error_page')
+@role_required(is_admin) # Using the new decorator
 def admin_view(request):
     """
     Admin dashboard view. Accessible only by users with the 'Admin' role.
     """
     return render(request, 'admin_view.html')
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def librarian_view(request):
     """
     Librarian dashboard view. Accessible only by users with the 'Librarian' role.
     """
     return render(request, 'librarian_view.html')
 
-@login_required
-@user_passes_test(is_member, login_url='relationship_app:error_page')
+@role_required(is_member) # Using the new decorator
 def member_view(request):
     """
     Member dashboard view. Accessible only by users with the 'Member' role.
@@ -173,8 +190,7 @@ def error_page(request):
     return render(request, 'error_page.html', {'message': 'You do not have permission to access this page.'})
 
 # --- Admin Functionality: Manage Users ---
-@login_required
-@user_passes_test(is_admin, login_url='relationship_app:error_page')
+@role_required(is_admin) # Using the new decorator
 def manage_users(request):
     """
     Admin view to list all users and allow role assignment.
@@ -182,8 +198,7 @@ def manage_users(request):
     users = User.objects.all().order_by('username')
     return render(request, 'admin/manage_users.html', {'users': users})
 
-@login_required
-@user_passes_test(is_admin, login_url='relationship_app:error_page')
+@role_required(is_admin) # Using the new decorator
 def assign_role(request, user_id):
     """
     Admin view to assign roles to a specific user.
@@ -222,8 +237,7 @@ def assign_role(request, user_id):
     return render(request, 'admin/assign_role.html', {'form': form, 'user_to_assign': user_to_assign})
 
 # --- Admin Functionality: Manage Groups (Optional, but good for completeness) ---
-@login_required
-@user_passes_test(is_admin, login_url='relationship_app:error_page')
+@role_required(is_admin) # Using the new decorator
 def manage_groups(request):
     """
     Admin view to list and manage Django groups.
@@ -232,14 +246,12 @@ def manage_groups(request):
     return render(request, 'admin/manage_groups.html', {'groups': groups})
 
 # --- Admin Functionality: View All Users (for dashboard link) ---
-@login_required
-@user_passes_test(is_admin, login_url='relationship_app:error_page')
+@role_required(is_admin) # Using the new decorator
 def admin_user_list(request):
     """Admin view to list all users with their current roles."""
     users_with_roles = []
     for user in User.objects.all().order_by('username'):
         role = "N/A"
-        # Use the robust is_role functions to get the actual role
         # Ensure that the user's profile is fetched or created before checking role
         user_profile = _get_or_create_user_profile(user)
         if user_profile.role == UserProfile.ADMIN:
@@ -252,8 +264,7 @@ def admin_user_list(request):
     return render(request, 'admin/admin_user_list.html', {'users_with_roles': users_with_roles})
 
 # --- Librarian Functionality: Manage Books ---
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def manage_books(request):
     """
     Librarian view to add, edit, or delete books.
@@ -261,8 +272,7 @@ def manage_books(request):
     books = Book.objects.all().order_by('title')
     return render(request, 'librarian/manage_books.html', {'books': books})
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def add_book(request):
     """Librarian view to add a new book."""
     if request.method == 'POST':
@@ -291,8 +301,7 @@ def add_book(request):
             messages.error(request, 'Please fill in all required fields.')
     return render(request, 'librarian/add_book.html')
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def edit_book(request, book_id):
     """Librarian view to edit an existing book."""
     book = get_object_or_404(Book, pk=book_id)
@@ -313,8 +322,7 @@ def edit_book(request, book_id):
         return redirect('relationship_app:manage_books')
     return render(request, 'librarian/edit_book.html', {'book': book})
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def delete_book(request, book_id):
     """Librarian view to delete a book."""
     book = get_object_or_404(Book, pk=book_id)
@@ -325,8 +333,7 @@ def delete_book(request, book_id):
     return render(request, 'librarian/delete_book_confirm.html', {'book': book})
 
 # --- Librarian Functionality: Handle Loans ---
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def handle_loans(request):
     """
     Librarian view to manage book loans (borrow, return).
@@ -334,8 +341,7 @@ def handle_loans(request):
     loans = Loan.objects.all().order_by('-loan_date')
     return render(request, 'librarian/handle_loans.html', {'loans': loans})
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def borrow_book_librarian(request):
     """Librarian view to facilitate a book loan for a member."""
     if request.method == 'POST':
@@ -361,8 +367,7 @@ def borrow_book_librarian(request):
     members = User.objects.filter(userprofile__role=UserProfile.MEMBER)
     return render(request, 'librarian/borrow_book_librarian.html', {'books': books, 'members': members})
 
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def return_book_librarian(request, loan_id):
     """Librarian view to mark a book as returned."""
     loan = get_object_or_404(Loan, pk=loan_id)
@@ -379,8 +384,7 @@ def return_book_librarian(request, loan_id):
     return render(request, 'librarian/return_book_librarian.html', {'loan': loan})
 
 # --- Librarian Functionality: View Members ---
-@login_required
-@user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@role_required(is_librarian) # Using the new decorator
 def view_members(request):
     """Librarian view to list all members."""
     members = User.objects.filter(userprofile__role=UserProfile.MEMBER).order_by('username')
@@ -388,8 +392,7 @@ def view_members(request):
 
 
 # --- Member Functionality: View All Books ---
-@login_required
-@user_passes_test(is_member, login_url='relationship_app:error_page')
+@role_required(is_member) # Using the new decorator
 def book_list(request):
     """
     Member view to list all available books.
@@ -398,8 +401,7 @@ def book_list(request):
     return render(request, 'relationship_app/book_list.html', {'books': books})
 
 # --- Member Functionality: View My Borrowed Books ---
-@login_required
-@user_passes_test(is_member, login_url='relationship_app:error_page')
+@role_required(is_member) # Using the new decorator
 def my_borrowed_books(request):
     """
     Member view to list books currently borrowed by the logged-in member.
@@ -408,8 +410,7 @@ def my_borrowed_books(request):
     return render(request, 'member/my_borrowed_books.html', {'borrowed_loans': borrowed_loans})
 
 # --- Member Functionality: Request a Book (Placeholder) ---
-@login_required
-@user_passes_test(is_member, login_url='relationship_app:error_page')
+@role_required(is_member) # Using the new decorator
 def request_book(request):
     """
     Member view to request a book (placeholder for future functionality).
@@ -422,7 +423,7 @@ def request_book(request):
     return render(request, 'member/request_book.html', {'unavailable_books': unavailable_books})
 
 # --- User Profile View ---
-@login_required
+@login_required # This view is generally accessible to any logged-in user to see profiles
 def user_profile(request, username):
     """
     Displays a user's profile.
@@ -437,8 +438,7 @@ def user_profile(request, username):
     }
     return render(request, 'user_profile.html', context)
 
-@login_required
-@user_passes_test(lambda u: is_admin(u) or is_librarian(u), login_url='relationship_app:error_page')
+@role_required(lambda u: is_admin(u) or is_librarian(u)) # Using the new decorator
 def user_assigned_books_view(request, username):
     """
     Displays books assigned to a specific user (for admin/librarian).
