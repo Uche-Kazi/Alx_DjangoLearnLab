@@ -16,18 +16,19 @@ from datetime import timedelta
 from django.conf import settings # Import settings
 
 # --- Helper functions for role checking ---
-def _get_or_create_user_profile(user):
+def _get_user_profile_and_ensure_group(user):
     """
-    Helper to get or create UserProfile for a given user.
-    Ensures the user is added to the 'Member' group if a new profile is created.
+    Ensures a UserProfile exists for the user and that the user is in the
+    correct default group (Member) if a new profile is created.
+    Returns the UserProfile instance.
     """
     user_profile, created = UserProfile.objects.get_or_create(user=user)
     if created:
-        # Assign default 'Member' group if profile was just created
+        # If a new profile was just created, ensure they are in the 'Member' group
         member_group, _ = Group.objects.get_or_create(name=UserProfile.MEMBER)
         user.groups.add(member_group)
         user.save() # Save user to persist group changes
-        print(f"DEBUG: UserProfile created for {user.username} with default role '{UserProfile.MEMBER}' and added to 'Member' group.")
+        print(f"DEBUG: _get_user_profile_and_ensure_group: Created UserProfile for {user.username} with default role '{UserProfile.MEMBER}' and added to 'Member' group.")
     return user_profile
 
 def is_admin(user):
@@ -39,13 +40,14 @@ def is_admin(user):
         print(f"DEBUG: is_admin called for unauthenticated user. Returning False.")
         return False
     
-    # First, check if the user is a Django superuser
+    # Prioritize Django's built-in superuser status
     if user.is_superuser:
         print(f"DEBUG: is_admin called for {user.username}. User is a superuser. Returning True.")
-        return True # Superusers automatically have all permissions
+        return True
 
-    # If not a superuser, check their UserProfile role
-    user_profile = _get_or_create_user_profile(user)
+    # If not a superuser, check their UserProfile role.
+    # We explicitly fetch the profile here to ensure it's fresh for the check.
+    user_profile = _get_user_profile_and_ensure_group(user)
     result = user_profile.role == UserProfile.ADMIN
     print(f"DEBUG: is_admin called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Admin: {result}")
     return result
@@ -54,7 +56,7 @@ def is_librarian(user):
     """Checks if the user has the 'Librarian' role in their UserProfile."""
     if not user.is_authenticated:
         return False
-    user_profile = _get_or_create_user_profile(user)
+    user_profile = _get_user_profile_and_ensure_group(user)
     result = user_profile.role == UserProfile.LIBRARIAN
     print(f"DEBUG: is_librarian called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Librarian: {result}")
     return result
@@ -63,7 +65,7 @@ def is_member(user):
     """Checks if the user has the 'Member' role in their UserProfile."""
     if not user.is_authenticated:
         return False
-    user_profile = _get_or_create_user_profile(user)
+    user_profile = _get_user_profile_and_ensure_group(user)
     result = user_profile.role == UserProfile.MEMBER
     print(f"DEBUG: is_member called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Member: {result}")
     return result
@@ -85,7 +87,7 @@ class RegisterView(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         user = self.object
-        # The UserProfile and 'Member' group assignment is now handled by the post_save signal
+        # UserProfile creation and default group assignment are handled by the post_save signal
         messages.success(self.request, 'Registration successful! You can now log in.')
         return response
 
@@ -102,6 +104,12 @@ class CustomLoginView(LoginView):
     authentication_form = None
 
     def get_success_url(self):
+        # After successful authentication, ensure the user object has its userprofile pre-fetched
+        # This is crucial for immediate role checks in the dashboard view.
+        user = self.request.user
+        if user.is_authenticated:
+            # Re-fetch the user with select_related to ensure userprofile is loaded
+            self.request.user = User.objects.select_related('userprofile').get(pk=user.pk)
         return reverse_lazy('relationship_app:dashboard')
 
     def form_invalid(self, form):
@@ -128,11 +136,12 @@ def dashboard(request):
     Renders a generic dashboard page and redirects to specific role dashboards.
     Ensures the user's profile is up-to-date for accurate role detection.
     """
-    # Force a fresh user object from the database to ensure latest profile data
-    request.user = User.objects.get(pk=request.user.pk)
+    # Force a fresh user object from the database with userprofile pre-fetched
+    # This ensures consistency for role checks immediately after login or any redirect to dashboard.
+    request.user = User.objects.select_related('userprofile').get(pk=request.user.pk)
     
-    # Ensure profile exists and is linked to a group
-    _get_or_create_user_profile(request.user)
+    # Ensure profile exists and is linked to a group (handled by _get_user_profile_and_ensure_group)
+    _get_user_profile_and_ensure_group(request.user)
 
     print(f"DEBUG: Dashboard accessed by {request.user.username}.")
     
@@ -195,7 +204,7 @@ def assign_role(request, user_id):
     Admin view to assign roles to a specific user.
     """
     user_to_assign = get_object_or_404(User, pk=user_id)
-    user_profile = _get_or_create_user_profile(user_to_assign) # Use helper
+    user_profile = _get_user_profile_and_ensure_group(user_to_assign) # Use helper
 
     if request.method == 'POST':
         form = UserRoleAssignmentForm(request.POST, instance=user_profile)
@@ -244,7 +253,7 @@ def admin_user_list(request):
     for user in User.objects.all().order_by('username'):
         role = "N/A"
         # Ensure that the user's profile is fetched or created before checking role
-        user_profile = _get_or_create_user_profile(user)
+        user_profile = _get_user_profile_and_ensure_group(user)
         if user_profile.role == UserProfile.ADMIN:
             role = UserProfile.ADMIN
         elif user_profile.role == UserProfile.LIBRARIAN:
@@ -351,7 +360,7 @@ def borrow_book_librarian(request):
             book.save()
             messages.success(request, f'"{book.title}" loaned to {member.username}. Due: {timezone.now() + timedelta(days=14)}.')
         else:
-            messages.error(request, f'"{book.title}" is currently not available.')
+            messages.error(request, '"{book.title}" is currently not available.')
         return redirect('relationship_app:handle_loans')
     
     books = Book.objects.filter(available_copies__gt=0)
@@ -370,7 +379,7 @@ def return_book_librarian(request, loan_id):
             loan.save()
             messages.success(request, f'"{loan.book.title}" returned by {loan.user.username}.')
         else:
-            messages.warning(request, f'"{loan.book.title}" was already returned.')
+            messages.warning(request, '"{loan.book.title}" was already returned.')
         return redirect('relationship_app:handle_loans')
     return render(request, 'librarian/return_book_librarian.html', {'loan': loan})
 
@@ -423,7 +432,7 @@ def user_profile(request, username):
     Displays a user's profile.
     """
     target_user = get_object_or_404(User, username=username)
-    user_profile = _get_or_create_user_profile(target_user) # Use helper
+    user_profile = _get_user_profile_and_ensure_group(target_user) # Use helper
 
     context = {
         'target_user': target_user,

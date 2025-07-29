@@ -1,7 +1,7 @@
 # LibraryProject/relationship_app/models.py
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group # Import Group
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -100,7 +100,6 @@ class Loan(models.Model):
     Represents a loan of a book to a user (member).
     """
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    # Ensure this is 'user' and not 'member' or anything else
     user = models.ForeignKey(User, on_delete=models.CASCADE) 
     loan_date = models.DateField(default=timezone.now)
     return_date = models.DateField(null=True, blank=True)
@@ -111,8 +110,6 @@ class Loan(models.Model):
         return f"{self.book.title} loaned to {self.user.username}{status}"
 
     class Meta:
-        # Ensure a book can only be actively loaned to a user once at a time
-        # If you changed 'member' to 'user', this unique_together might need a migration too.
         unique_together = ('book', 'user', 'return_date')
         verbose_name = "Book Loan"
         verbose_name_plural = "Book Loans"
@@ -123,12 +120,22 @@ class Loan(models.Model):
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     """
     Automatically creates or updates a UserProfile when a User is created or updated.
-    Ensures that every User has a corresponding UserProfile.
+    Ensures that every User has a corresponding UserProfile and is in the 'Member' group.
     """
     if created:
-        UserProfile.objects.create(user=instance, role=UserProfile.MEMBER)
+        # Create UserProfile if it doesn't exist
+        UserProfile.objects.get_or_create(user=instance, defaults={'role': UserProfile.MEMBER})
+        # Add user to 'Member' group by default
+        member_group, _ = Group.objects.get_or_create(name=UserProfile.MEMBER)
+        instance.groups.add(member_group)
+        instance.save() # Save user to persist group changes
     else:
+        # For existing users, ensure their UserProfile is saved if it exists
         try:
             instance.userprofile.save()
         except UserProfile.DoesNotExist:
+            # If for some reason an existing user doesn't have a profile, create one
             UserProfile.objects.create(user=instance, role=UserProfile.MEMBER)
+            member_group, _ = Group.objects.get_or_create(name=UserProfile.MEMBER)
+            instance.groups.add(member_group)
+            instance.save()
