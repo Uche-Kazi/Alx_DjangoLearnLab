@@ -1,40 +1,31 @@
 # LibraryProject/relationship_app/views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm # Still needed for base form
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group # Only Group is needed from auth.models now
+from django.conf import settings
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from django.contrib import messages
-from .forms import CustomUserCreationForm, UserRoleAssignmentForm # <-- ENSURE CustomUserCreationForm IS HERE
-from .models import UserProfile, Book, Loan, Author
+
+# Import CustomUser and other models
+from .models import CustomUser, Book, Loan, Author # Use CustomUser now
+from .forms import CustomUserCreationForm, UserRoleAssignmentForm # Ensure these are imported
+
 from django.utils import timezone
 from datetime import timedelta
-from django.conf import settings
 
-# --- Helper functions for role checking ---
-def _get_user_profile_and_ensure_group(user):
-    """
-    Ensures a UserProfile exists for the user and that the user is in the
-    correct default group (Member) if a new profile is created.
-    Returns the UserProfile instance.
-    """
-    user_profile, created = UserProfile.objects.get_or_create(user=user)
-    if created:
-        # If a new profile was just created, ensure they are in the 'Member' group
-        member_group, _ = Group.objects.get_or_create(name=UserProfile.MEMBER)
-        user.groups.add(member_group)
-        user.save() # Save user to persist group changes
-        print(f"DEBUG: _get_user_profile_and_ensure_group: Created UserProfile for {user.username} with default role '{UserProfile.MEMBER}' and added to 'Member' group.")
-    return user_profile
 
+# --- Helper functions for role checking (simplified for CustomUser) ---
+# _get_user_profile_and_ensure_group is no longer needed as role is direct on CustomUser
+# We will ensure group assignment in the CustomUserCreationForm or admin.
 def is_admin(user):
     """
-    Checks if the user has the 'Admin' role in their UserProfile
+    Checks if the user has the 'Admin' role directly on CustomUser
     OR if they are a Django superuser.
     """
     if not user.is_authenticated:
@@ -42,23 +33,23 @@ def is_admin(user):
     
     if user.is_superuser:
         return True
-
-    user_profile = _get_user_profile_and_ensure_group(user)
-    return user_profile.role == UserProfile.ADMIN
+    
+    # Direct check on CustomUser.role
+    return user.role == CustomUser.ADMIN
 
 def is_librarian(user):
-    """Checks if the user has the 'Librarian' role in their UserProfile."""
+    """Checks if the user has the 'Librarian' role directly on CustomUser."""
     if not user.is_authenticated:
         return False
-    user_profile = _get_user_profile_and_ensure_group(user)
-    return user_profile.role == UserProfile.LIBRARIAN
+    # Direct check on CustomUser.role
+    return user.role == CustomUser.LIBRARIAN
 
 def is_member(user):
-    """Checks if the user has the 'Member' role in their UserProfile."""
+    """Checks if the user has the 'Member' role directly on CustomUser."""
     if not user.is_authenticated:
         return False
-    user_profile = _get_user_profile_and_ensure_group(user)
-    return user_profile.role == UserProfile.MEMBER
+    # Direct check on CustomUser.role
+    return user.role == CustomUser.MEMBER
 
 def is_any_role(user):
     """Checks if the user belongs to any of the defined roles."""
@@ -76,8 +67,7 @@ def custom_403_view(request, exception=None):
 # --- Custom Registration View ---
 class RegisterView(CreateView):
     """
-    Handles user registration, creating a User and UserProfile,
-    and assigning the 'Member' group by default.
+    Handles user registration, creating a CustomUser.
     """
     form_class = CustomUserCreationForm
     template_name = 'registration/register.html'
@@ -85,13 +75,16 @@ class RegisterView(CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        user = self.object
-        # UserProfile creation and default group assignment are handled by the post_save signal
+        user = self.object # This is now a CustomUser instance
+        # Ensure 'Member' group is assigned upon creation if not already
+        member_group, _ = Group.objects.get_or_create(name=CustomUser.MEMBER)
+        user.groups.add(member_group)
+        user.save() # Save user to persist group changes
         messages.success(self.request, 'Registration successful! You can now log in.')
         return response
 
     def form_invalid(self, form):
-        messages.error(self.request, 'Registration failed. Please correct the errors below.')
+        messages.error(request, 'Registration failed. Please correct the errors below.')
         return super().form_invalid(form)
 
 # --- Custom Login View ---
@@ -103,9 +96,7 @@ class CustomLoginView(LoginView):
     authentication_form = None
 
     def get_success_url(self):
-        user = self.request.user
-        if user.is_authenticated:
-            self.request.user = User.objects.select_related('userprofile').get(pk=user.pk)
+        # No need to select_related('userprofile') as role is direct on CustomUser
         return reverse_lazy('relationship_app:dashboard')
 
     def form_invalid(self, form):
@@ -125,16 +116,13 @@ def home(request):
     """Renders the home page."""
     return render(request, 'home.html')
 
-# --- Dashboard View (Generic, now redirects based on UserProfile role) ---
+# --- Dashboard View (Generic, now redirects based on CustomUser role) ---
 @login_required
 def dashboard(request):
     """
     Renders a generic dashboard page and redirects to specific role dashboards.
-    Ensures the user's profile is up-to-date for accurate role detection.
     """
-    request.user = User.objects.select_related('userprofile').get(pk=request.user.pk)
-    _get_user_profile_and_ensure_group(request.user)
-
+    # No need to re-fetch user or ensure profile, role is direct on request.user
     print(f"DEBUG: Dashboard accessed by {request.user.username}.")
     
     if is_admin(request.user):
@@ -149,14 +137,10 @@ def dashboard(request):
     else:
         print(f"DEBUG: No specific role matched for {request.user.username}. Rendering generic dashboard.")
         messages.warning(request, "Your account does not have a specific role assigned. Please contact support.")
-        return render(request, 'dashboard.html', {'user_profile': request.user.userprofile})
-
+        return render(request, 'dashboard.html', {'user': request.user}) # Pass CustomUser directly
 
 # --- Role-Based Dashboard Views ---
 
-# Using user_passes_test with login_url=settings.LOGIN_URL to handle unauthenticated,
-# and letting PermissionDenied raise for authenticated but unauthorized,
-# which will be caught by handler403.
 @user_passes_test(is_admin, login_url=settings.LOGIN_URL)
 def admin_view(request):
     """
@@ -189,7 +173,7 @@ def manage_users(request):
     """
     Admin view to list all users and allow role assignment.
     """
-    users = User.objects.all().order_by('username')
+    users = CustomUser.objects.all().order_by('username') # Use CustomUser
     return render(request, 'admin/manage_users.html', {'users': users})
 
 @user_passes_test(is_admin, login_url=settings.LOGIN_URL)
@@ -197,36 +181,34 @@ def assign_role(request, user_id):
     """
     Admin view to assign roles to a specific user.
     """
-    user_to_assign = get_object_or_404(User, pk=user_id)
-    user_profile = _get_user_profile_and_ensure_group(user_to_assign) # Use helper
+    user_to_assign = get_object_or_404(CustomUser, pk=user_id) # Use CustomUser
 
     if request.method == 'POST':
-        form = UserRoleAssignmentForm(request.POST, instance=user_profile)
+        form = UserRoleAssignmentForm(request.POST, instance=user_to_assign) # Pass user_to_assign directly
         if form.is_valid():
             new_role = form.cleaned_data['role']
             
-            # Update UserProfile role
-            user_profile.role = new_role
-            user_profile.save()
+            user_to_assign.role = new_role # Update role directly
+            user_to_assign.save()
 
-            # Clear existing groups and assign the new group based on the selected role
+            # Update groups based on the new role (optional, but good practice)
             user_to_assign.groups.clear()
-            if new_role == UserProfile.ADMIN:
-                group, created = Group.objects.get_or_create(name=UserProfile.ADMIN)
+            if new_role == CustomUser.ADMIN:
+                group, created = Group.objects.get_or_create(name=CustomUser.ADMIN)
                 user_to_assign.groups.add(group)
-            elif new_role == UserProfile.LIBRARIAN:
-                group, created = Group.objects.get_or_create(name=UserProfile.LIBRARIAN)
+            elif new_role == CustomUser.LIBRARIAN:
+                group, created = Group.objects.get_or_create(name=CustomUser.LIBRARIAN)
                 user_to_assign.groups.add(group)
-            elif new_role == UserProfile.MEMBER:
-                group, created = Group.objects.get_or_create(name=UserProfile.MEMBER)
+            elif new_role == CustomUser.MEMBER:
+                group, created = Group.objects.get_or_create(name=CustomUser.MEMBER)
                 user_to_assign.groups.add(group)
             
-            user_to_assign.save() # Save the user to persist group changes
+            user_to_assign.save()
 
             messages.success(request, f'Role for {user_to_assign.username} updated to {new_role}.')
             return redirect('relationship_app:manage_users')
     else:
-        form = UserRoleAssignmentForm(instance=user_profile)
+        form = UserRoleAssignmentForm(instance=user_to_assign) # Pass user_to_assign directly
     
     return render(request, 'admin/assign_role.html', {'form': form, 'user_to_assign': user_to_assign})
 
@@ -244,16 +226,8 @@ def manage_groups(request):
 def admin_user_list(request):
     """Admin view to list all users with their current roles."""
     users_with_roles = []
-    for user in User.objects.all().order_by('username'):
-        role = "N/A"
-        user_profile = _get_user_profile_and_ensure_group(user)
-        if user_profile.role == UserProfile.ADMIN:
-            role = UserProfile.ADMIN
-        elif user_profile.role == UserProfile.LIBRARIAN:
-            role = UserProfile.LIBRARIAN
-        elif user_profile.role == UserProfile.MEMBER:
-            role = UserProfile.MEMBER
-        users_with_roles.append({'user': user, 'role': role})
+    for user in CustomUser.objects.all().order_by('username'): # Use CustomUser
+        users_with_roles.append({'user': user, 'role': user.role}) # Access role directly
     return render(request, 'admin/admin_user_list.html', {'users_with_roles': users_with_roles})
 
 # --- Librarian Functionality: Manage Books ---
@@ -339,7 +313,7 @@ def borrow_book_librarian(request):
         book_id = request.POST.get('book_id')
         member_id = request.POST.get('member_id')
         book = get_object_or_404(Book, pk=book_id)
-        member = get_object_or_404(User, pk=member_id)
+        member = get_object_or_404(CustomUser, pk=member_id) # Use CustomUser
 
         # Use is_member helper for this check
         if not is_member(member):
@@ -356,7 +330,7 @@ def borrow_book_librarian(request):
         return redirect('relationship_app:handle_loans')
     
     books = Book.objects.filter(available_copies__gt=0)
-    members = User.objects.filter(userprofile__role=UserProfile.MEMBER)
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER) # Filter by CustomUser.role
     return render(request, 'librarian/borrow_book_librarian.html', {'books': books, 'members': members})
 
 @user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
@@ -379,7 +353,7 @@ def return_book_librarian(request, loan_id):
 @user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
 def view_members(request):
     """Librarian view to list all members."""
-    members = User.objects.filter(userprofile__role=UserProfile.MEMBER).order_by('username')
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER).order_by('username') # Filter by CustomUser.role
     return render(request, 'librarian/view_members.html', {'members': members})
 
 
@@ -420,12 +394,11 @@ def user_profile(request, username):
     """
     Displays a user's profile.
     """
-    target_user = get_object_or_404(User, username=username)
-    user_profile = _get_user_profile_and_ensure_group(target_user) # Use helper
+    target_user = get_object_or_404(CustomUser, username=username) # Use CustomUser
 
     context = {
         'target_user': target_user,
-        'user_profile': user_profile,
+        'user_profile': target_user, # Pass CustomUser directly as 'user_profile' for template compatibility
         'borrowed_loans': Loan.objects.filter(user=target_user, return_date__isnull=True)
     }
     return render(request, 'user_profile.html', context)
@@ -435,7 +408,7 @@ def user_assigned_books_view(request, username):
     """
     Displays books assigned to a specific user (for admin/librarian).
     """
-    target_user = get_object_or_404(User, username=username)
+    target_user = get_object_or_404(CustomUser, username=username) # Use CustomUser
     assigned_loans = Loan.objects.filter(user=target_user, return_date__isnull=True)
     context = {
         'target_user': target_user,

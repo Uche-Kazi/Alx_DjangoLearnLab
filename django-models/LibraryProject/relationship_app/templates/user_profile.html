@@ -1,0 +1,63 @@
+{# LibraryProject/relationship_app/templates/user_profile.html #}
+{% extends 'relationship_app/base.html' %}
+
+{% block title %}User Profile: {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">User Profile: {{ target_user.username }}</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Username:</p>
+            <p class="text-lg text-gray-900">{{ target_user.username }}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Email:</p>
+            <p class="text-lg text-gray-900">{{ target_user.email|default:"N/A" }}</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Role:</p>
+            <p class="text-lg text-gray-900">{{ target_user.role }}</p> {# Access role directly #}
+        </div>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Full Name:</p>
+            <p class="text-lg text-gray-900">{{ target_user.first_name }} {{ target_user.last_name }}</p>
+        </div>
+        {# If you added date_of_birth, address, phone_number to CustomUser, uncomment and use them here #}
+        {# {% if target_user.date_of_birth %}
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Date of Birth:</p>
+            <p class="text-lg text-gray-900">{{ target_user.date_of_birth|date:"M d, Y" }}</p>
+        </div>
+        {% endif %}
+        {% if target_user.address %}
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Address:</p>
+            <p class="text-lg text-gray-900">{{ target_user.address }}</p>
+        </div>
+        {% endif %}
+        {% if target_user.phone_number %}
+        <div class="bg-gray-50 p-4 rounded-md">
+            <p class="text-sm font-medium text-gray-500">Phone Number:</p>
+            <p class="text-lg text-gray-900">{{ target_user.phone_number }}</p>
+        </div>
+        {% endif %} #}
+    </div>
+
+    {% if borrowed_loans %}
+    <h3 class="text-xl font-bold text-gray-800 mb-4">Currently Borrowed Books:</h3>
+    <ul class="list-disc list-inside bg-gray-50 p-4 rounded-md">
+        {% for loan in borrowed_loans %}
+            <li class="text-gray-700">{{ loan.book.title }} (Due: {{ loan.due_date|date:"M d, Y" }})</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-center text-gray-600 text-lg">No books currently borrowed.</p>
+    {% endif %}
+
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Dashboard</a>
+    </p>
+</div>
+{% endblock %}

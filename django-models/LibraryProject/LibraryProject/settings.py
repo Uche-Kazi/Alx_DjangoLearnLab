@@ -149,3 +149,6 @@ LOGIN_URL = '/login/' # Specify the URL for the login page
 # Crispy Forms Configuration (Added these lines)
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
+
+# Custom User Model
+AUTH_USER_MODEL = 'relationship_app.CustomUser' # This must point to your CustomUser model
