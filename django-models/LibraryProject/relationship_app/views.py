@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
-from django.contrib.auth.views import LoginView # <-- ADDED THIS IMPORT
+from django.contrib.auth.views import LoginView # <-- THIS IS THE LINE TO ENSURE IS PRESENT
 from django.contrib.auth.models import Group, User
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
@@ -36,40 +36,30 @@ def is_admin(user):
     """
     Checks if the user has the 'Admin' role in their UserProfile
     OR if they are a Django superuser.
+    This helper is primarily used by the dashboard redirect logic.
     """
     if not user.is_authenticated:
-        print(f"DEBUG: is_admin called for unauthenticated user. Returning False.")
         return False
     
-    # Prioritize Django's built-in superuser status
     if user.is_superuser:
-        print(f"DEBUG: is_admin called for {user.username}. User is a superuser. Returning True.")
         return True
 
-    # If not a superuser, check their UserProfile role.
-    # We explicitly fetch the profile here to ensure it's fresh for the check.
     user_profile = _get_user_profile_and_ensure_group(user)
-    result = user_profile.role == UserProfile.ADMIN
-    print(f"DEBUG: is_admin called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Admin: {result}")
-    return result
+    return user_profile.role == UserProfile.ADMIN
 
 def is_librarian(user):
     """Checks if the user has the 'Librarian' role in their UserProfile."""
     if not user.is_authenticated:
         return False
     user_profile = _get_user_profile_and_ensure_group(user)
-    result = user_profile.role == UserProfile.LIBRARIAN
-    print(f"DEBUG: is_librarian called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Librarian: {result}")
-    return result
+    return user_profile.role == UserProfile.LIBRARIAN
 
 def is_member(user):
     """Checks if the user has the 'Member' role in their UserProfile."""
     if not user.is_authenticated:
         return False
     user_profile = _get_user_profile_and_ensure_group(user)
-    result = user_profile.role == UserProfile.MEMBER
-    print(f"DEBUG: is_member called for {user.username}. UserProfile Role: '{user_profile.role}'. Is Member: {result}")
-    return result
+    return user_profile.role == UserProfile.MEMBER
 
 def is_any_role(user):
     """Checks if the user belongs to any of the defined roles."""
@@ -146,13 +136,13 @@ def dashboard(request):
 
     print(f"DEBUG: Dashboard accessed by {request.user.username}.")
     
-    if is_admin(request.user):
+    if is_admin(request.user): # Use helper for dashboard redirect logic
         print(f"DEBUG: Redirecting {request.user.username} to Admin Dashboard.")
         return redirect('relationship_app:admin_dashboard')
-    elif is_librarian(request.user):
+    elif is_librarian(request.user): # Use helper for dashboard redirect logic
         print(f"DEBUG: Redirecting {request.user.username} to Librarian Dashboard.")
         return redirect('relationship_app:librarian_dashboard')
-    elif is_member(request.user):
+    elif is_member(request.user): # Use helper for dashboard redirect logic
         print(f"DEBUG: Redirecting {request.user.username} to Member Dashboard.")
         return redirect('relationship_app:member_dashboard')
     else:
@@ -169,7 +159,7 @@ def admin_view(request):
     """
     Admin dashboard view. Accessible only by users with the 'Admin' role.
     """
-    if is_admin(request.user):
+    if request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Admin')):
         return render(request, 'admin_view.html')
     else:
         messages.error(request, "You are not authorized to access this page.")
@@ -180,7 +170,7 @@ def librarian_view(request):
     """
     Librarian dashboard view. Accessible only by users with the 'Librarian' role.
     """
-    if is_librarian(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian':
         return render(request, 'librarian_view.html')
     else:
         messages.error(request, "You are not authorized to access this page.")
@@ -191,7 +181,7 @@ def member_view(request):
     """
     Member dashboard view. Accessible only by users with the 'Member' role.
     """
-    if is_member(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Member':
         return render(request, 'member_view.html')
     else:
         messages.error(request, "You are not authorized to access this page.")
@@ -208,7 +198,7 @@ def manage_users(request):
     """
     Admin view to list all users and allow role assignment.
     """
-    if is_admin(request.user):
+    if request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Admin')):
         users = User.objects.all().order_by('username')
         return render(request, 'admin/manage_users.html', {'users': users})
     else:
@@ -220,7 +210,7 @@ def assign_role(request, user_id):
     """
     Admin view to assign roles to a specific user.
     """
-    if not is_admin(request.user):
+    if not (request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Admin'))):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -263,7 +253,7 @@ def manage_groups(request):
     """
     Admin view to list and manage Django groups.
     """
-    if is_admin(request.user):
+    if request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Admin')):
         groups = Group.objects.all().order_by('name')
         return render(request, 'admin/manage_groups.html', {'groups': groups})
     else:
@@ -274,11 +264,10 @@ def manage_groups(request):
 @login_required
 def admin_user_list(request):
     """Admin view to list all users with their current roles."""
-    if is_admin(request.user):
+    if request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Admin')):
         users_with_roles = []
         for user in User.objects.all().order_by('username'):
             role = "N/A"
-            # Ensure that the user's profile is fetched or created before checking role
             user_profile = _get_user_profile_and_ensure_group(user)
             if user_profile.role == UserProfile.ADMIN:
                 role = UserProfile.ADMIN
@@ -298,7 +287,7 @@ def manage_books(request):
     """
     Librarian view to add, edit, or delete books.
     """
-    if is_librarian(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian':
         books = Book.objects.all().order_by('title')
         return render(request, 'librarian/manage_books.html', {'books': books})
     else:
@@ -308,7 +297,7 @@ def manage_books(request):
 @login_required
 def add_book(request):
     """Librarian view to add a new book."""
-    if not is_librarian(request.user):
+    if not (request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian'):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -320,7 +309,6 @@ def add_book(request):
         available_copies = request.POST.get('available_copies')
         total_copies = request.POST.get('total_copies')
         
-        # Get or create author - assuming author_name is just first name for simplicity
         author, created = Author.objects.get_or_create(first_name=author_name, defaults={'last_name': ''})
 
         if title and author and available_copies is not None and total_copies is not None:
@@ -341,7 +329,7 @@ def add_book(request):
 @login_required
 def edit_book(request, book_id):
     """Librarian view to edit an existing book."""
-    if not is_librarian(request.user):
+    if not (request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian'):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -354,7 +342,6 @@ def edit_book(request, book_id):
         book.available_copies = request.POST.get('available_copies')
         book.total_copies = request.POST.get('total_copies')
         
-        # Get or create author - assuming author_name is just first name for simplicity
         author, created = Author.objects.get_or_create(first_name=author_name, defaults={'last_name': ''})
         book.author = author
         
@@ -366,7 +353,7 @@ def edit_book(request, book_id):
 @login_required
 def delete_book(request, book_id):
     """Librarian view to delete a book."""
-    if not is_librarian(request.user):
+    if not (request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian'):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -383,7 +370,7 @@ def handle_loans(request):
     """
     Librarian view to manage book loans (borrow, return).
     """
-    if is_librarian(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian':
         loans = Loan.objects.all().order_by('-loan_date')
         return render(request, 'librarian/handle_loans.html', {'loans': loans})
     else:
@@ -393,7 +380,7 @@ def handle_loans(request):
 @login_required
 def borrow_book_librarian(request):
     """Librarian view to facilitate a book loan for a member."""
-    if not is_librarian(request.user):
+    if not (request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian'):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -403,7 +390,7 @@ def borrow_book_librarian(request):
         book = get_object_or_404(Book, pk=book_id)
         member = get_object_or_404(User, pk=member_id)
 
-        if not is_member(member):
+        if not (member.is_authenticated and hasattr(member, 'userprofile') and member.userprofile.role == 'Member'): # Check if target member is actually a member
             messages.error(request, f'{member.username} is not a member or does not have the "Member" role.')
             return redirect('relationship_app:handle_loans')
 
@@ -423,7 +410,7 @@ def borrow_book_librarian(request):
 @login_required
 def return_book_librarian(request, loan_id):
     """Librarian view to mark a book as returned."""
-    if not is_librarian(request.user):
+    if not (request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian'):
         messages.error(request, "You are not authorized to perform this action.")
         return HttpResponseForbidden("You are not authorized to perform this action.")
 
@@ -444,7 +431,7 @@ def return_book_librarian(request, loan_id):
 @login_required
 def view_members(request):
     """Librarian view to list all members."""
-    if is_librarian(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Librarian':
         members = User.objects.filter(userprofile__role=UserProfile.MEMBER).order_by('username')
         return render(request, 'librarian/view_members.html', {'members': members})
     else:
@@ -458,7 +445,7 @@ def book_list(request):
     """
     Member view to list all available books.
     """
-    if is_member(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Member':
         books = Book.objects.filter(available_copies__gt=0).order_by('title')
         return render(request, 'relationship_app/book_list.html', {'books': books})
     else:
@@ -471,7 +458,7 @@ def my_borrowed_books(request):
     """
     Member view to list books currently borrowed by the logged-in member.
     """
-    if is_member(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Member':
         borrowed_loans = Loan.objects.filter(user=request.user, return_date__isnull=True).order_by('-loan_date')
         return render(request, 'member/my_borrowed_books.html', {'borrowed_loans': borrowed_loans})
     else:
@@ -484,7 +471,7 @@ def request_book(request):
     """
     Member view to request a book (placeholder for future functionality).
     """
-    if is_member(request.user):
+    if request.user.is_authenticated and hasattr(request.user, 'userprofile') and request.user.userprofile.role == 'Member':
         if request.method == 'POST':
             messages.info(request, "Book request functionality is under development.")
             return redirect('relationship_app:member_dashboard')
@@ -496,9 +483,6 @@ def request_book(request):
         return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- User Profile View ---
-# This view is generally accessible to any logged-in user to see profiles,
-# but if you want to restrict it to admin/librarian for other users' profiles,
-# you'd use a decorator here. For now, keeping it open to logged-in users.
 @login_required
 def user_profile(request, username):
     """
@@ -519,7 +503,7 @@ def user_assigned_books_view(request, username):
     """
     Displays books assigned to a specific user (for admin/librarian).
     """
-    if is_admin(request.user) or is_librarian(request.user):
+    if request.user.is_authenticated and (request.user.is_superuser or (hasattr(request.user, 'userprofile') and (request.user.userprofile.role == 'Admin' or request.user.userprofile.role == 'Librarian'))):
         target_user = get_object_or_404(User, username=username)
         assigned_loans = Loan.objects.filter(user=target_user, return_date__isnull=True)
         context = {
