@@ -1,28 +1,27 @@
 # LibraryProject/relationship_app/views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.forms import UserCreationForm # Still needed for base form
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseForbidden, HttpResponse
 from django.contrib.auth.views import LoginView
-from django.contrib.auth.models import Group # Only Group is needed from auth.models now
-from django.conf import settings
+from django.contrib.auth.models import Group
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from django.contrib import messages
+from django.conf import settings # Import settings for LOGIN_URL
 
 # Import CustomUser and other models
-from .models import CustomUser, Book, Loan, Author # Use CustomUser now
-from .forms import CustomUserCreationForm, UserRoleAssignmentForm # Ensure these are imported
+from .models import CustomUser, Book, Loan, Author
+from .forms import CustomUserCreationForm, UserRoleAssignmentForm
+
 
 from django.utils import timezone
 from datetime import timedelta
 
 
-# --- Helper functions for role checking (simplified for CustomUser) ---
-# _get_user_profile_and_ensure_group is no longer needed as role is direct on CustomUser
-# We will ensure group assignment in the CustomUserCreationForm or admin.
+# --- Helper functions for role checking ---
 def is_admin(user):
     """
     Checks if the user has the 'Admin' role directly on CustomUser
@@ -34,21 +33,18 @@ def is_admin(user):
     if user.is_superuser:
         return True
     
-    # Direct check on CustomUser.role
     return user.role == CustomUser.ADMIN
 
 def is_librarian(user):
     """Checks if the user has the 'Librarian' role directly on CustomUser."""
     if not user.is_authenticated:
         return False
-    # Direct check on CustomUser.role
     return user.role == CustomUser.LIBRARIAN
 
 def is_member(user):
     """Checks if the user has the 'Member' role directly on CustomUser."""
     if not user.is_authenticated:
         return False
-    # Direct check on CustomUser.role
     return user.role == CustomUser.MEMBER
 
 def is_any_role(user):
@@ -96,7 +92,6 @@ class CustomLoginView(LoginView):
     authentication_form = None
 
     def get_success_url(self):
-        # No need to select_related('userprofile') as role is direct on CustomUser
         return reverse_lazy('relationship_app:dashboard')
 
     def form_invalid(self, form):
@@ -122,7 +117,6 @@ def dashboard(request):
     """
     Renders a generic dashboard page and redirects to specific role dashboards.
     """
-    # No need to re-fetch user or ensure profile, role is direct on request.user
     print(f"DEBUG: Dashboard accessed by {request.user.username}.")
     
     if is_admin(request.user):
@@ -137,25 +131,26 @@ def dashboard(request):
     else:
         print(f"DEBUG: No specific role matched for {request.user.username}. Rendering generic dashboard.")
         messages.warning(request, "Your account does not have a specific role assigned. Please contact support.")
-        return render(request, 'dashboard.html', {'user': request.user}) # Pass CustomUser directly
+        return render(request, 'dashboard.html', {'user': request.user})
 
 # --- Role-Based Dashboard Views ---
 
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+# Removed login_url from user_passes_test to allow PermissionDenied to be raised
+@user_passes_test(is_admin)
 def admin_view(request):
     """
     Admin dashboard view. Accessible only by users with the 'Admin' role.
     """
     return render(request, 'admin_view.html')
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def librarian_view(request):
     """
     Librarian dashboard view. Accessible only by users with the 'Librarian' role.
     """
     return render(request, 'librarian_view.html')
 
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@user_passes_test(is_member)
 def member_view(request):
     """
     Member dashboard view. Accessible only by users with the 'Member' role.
@@ -168,30 +163,29 @@ def error_page(request):
     return render(request, 'error_page.html', {'message': 'You do not have permission to access this page.'})
 
 # --- Admin Functionality: Manage Users ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@user_passes_test(is_admin)
 def manage_users(request):
     """
     Admin view to list all users and allow role assignment.
     """
-    users = CustomUser.objects.all().order_by('username') # Use CustomUser
+    users = CustomUser.objects.all().order_by('username')
     return render(request, 'admin/manage_users.html', {'users': users})
 
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@user_passes_test(is_admin)
 def assign_role(request, user_id):
     """
     Admin view to assign roles to a specific user.
     """
-    user_to_assign = get_object_or_404(CustomUser, pk=user_id) # Use CustomUser
+    user_to_assign = get_object_or_404(CustomUser, pk=user_id)
 
     if request.method == 'POST':
-        form = UserRoleAssignmentForm(request.POST, instance=user_to_assign) # Pass user_to_assign directly
+        form = UserRoleAssignmentForm(request.POST, instance=user_to_assign)
         if form.is_valid():
             new_role = form.cleaned_data['role']
             
-            user_to_assign.role = new_role # Update role directly
+            user_to_assign.role = new_role
             user_to_assign.save()
 
-            # Update groups based on the new role (optional, but good practice)
             user_to_assign.groups.clear()
             if new_role == CustomUser.ADMIN:
                 group, created = Group.objects.get_or_create(name=CustomUser.ADMIN)
@@ -208,12 +202,12 @@ def assign_role(request, user_id):
             messages.success(request, f'Role for {user_to_assign.username} updated to {new_role}.')
             return redirect('relationship_app:manage_users')
     else:
-        form = UserRoleAssignmentForm(instance=user_to_assign) # Pass user_to_assign directly
+        form = UserRoleAssignmentForm(instance=user_to_assign)
     
     return render(request, 'admin/assign_role.html', {'form': form, 'user_to_assign': user_to_assign})
 
 # --- Admin Functionality: Manage Groups (Optional, but good for completeness) ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@user_passes_test(is_admin)
 def manage_groups(request):
     """
     Admin view to list and manage Django groups.
@@ -222,16 +216,16 @@ def manage_groups(request):
     return render(request, 'admin/manage_groups.html', {'groups': groups})
 
 # --- Admin Functionality: View All Users (for dashboard link) ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@user_passes_test(is_admin)
 def admin_user_list(request):
     """Admin view to list all users with their current roles."""
     users_with_roles = []
-    for user in CustomUser.objects.all().order_by('username'): # Use CustomUser
-        users_with_roles.append({'user': user, 'role': user.role}) # Access role directly
+    for user in CustomUser.objects.all().order_by('username'):
+        users_with_roles.append({'user': user, 'role': user.role})
     return render(request, 'admin/admin_user_list.html', {'users_with_roles': users_with_roles})
 
 # --- Librarian Functionality: Manage Books ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def manage_books(request):
     """
     Librarian view to add, edit, or delete books.
@@ -239,7 +233,7 @@ def manage_books(request):
     books = Book.objects.all().order_by('title')
     return render(request, 'librarian/manage_books.html', {'books': books})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def add_book(request):
     """Librarian view to add a new book."""
     if request.method == 'POST':
@@ -267,7 +261,7 @@ def add_book(request):
             messages.error(request, 'Please fill in all required fields.')
     return render(request, 'librarian/add_book.html')
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def edit_book(request, book_id):
     """Librarian view to edit an existing book."""
     book = get_object_or_404(Book, pk=book_id)
@@ -287,7 +281,7 @@ def edit_book(request, book_id):
         return redirect('relationship_app:manage_books')
     return render(request, 'librarian/edit_book.html', {'book': book})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def delete_book(request, book_id):
     """Librarian view to delete a book."""
     book = get_object_or_404(Book, pk=book_id)
@@ -298,7 +292,7 @@ def delete_book(request, book_id):
     return render(request, 'librarian/delete_book_confirm.html', {'book': book})
 
 # --- Librarian Functionality: Handle Loans ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def handle_loans(request):
     """
     Librarian view to manage book loans (borrow, return).
@@ -306,16 +300,15 @@ def handle_loans(request):
     loans = Loan.objects.all().order_by('-loan_date')
     return render(request, 'librarian/handle_loans.html', {'loans': loans})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def borrow_book_librarian(request):
     """Librarian view to facilitate a book loan for a member."""
     if request.method == 'POST':
         book_id = request.POST.get('book_id')
         member_id = request.POST.get('member_id')
         book = get_object_or_404(Book, pk=book_id)
-        member = get_object_or_404(CustomUser, pk=member_id) # Use CustomUser
+        member = get_object_or_404(CustomUser, pk=member_id)
 
-        # Use is_member helper for this check
         if not is_member(member):
             messages.error(request, f'{member.username} is not a member or does not have the "Member" role.')
             return redirect('relationship_app:handle_loans')
@@ -330,10 +323,10 @@ def borrow_book_librarian(request):
         return redirect('relationship_app:handle_loans')
     
     books = Book.objects.filter(available_copies__gt=0)
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER) # Filter by CustomUser.role
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER)
     return render(request, 'librarian/borrow_book_librarian.html', {'books': books, 'members': members})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def return_book_librarian(request, loan_id):
     """Librarian view to mark a book as returned."""
     loan = get_object_or_404(Loan, pk=loan_id)
@@ -350,15 +343,15 @@ def return_book_librarian(request, loan_id):
     return render(request, 'librarian/return_book_librarian.html', {'loan': loan})
 
 # --- Librarian Functionality: View Members ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@user_passes_test(is_librarian)
 def view_members(request):
     """Librarian view to list all members."""
-    members = CustomUser.objects.filter(role=CustomUser.MEMBER).order_by('username') # Filter by CustomUser.role
+    members = CustomUser.objects.filter(role=CustomUser.MEMBER).order_by('username')
     return render(request, 'librarian/view_members.html', {'members': members})
 
 
 # --- Member Functionality: View All Books ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@user_passes_test(is_member)
 def book_list(request):
     """
     Member view to list all available books.
@@ -367,7 +360,7 @@ def book_list(request):
     return render(request, 'relationship_app/book_list.html', {'books': books})
 
 # --- Member Functionality: View My Borrowed Books ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@user_passes_test(is_member)
 def my_borrowed_books(request):
     """
     Member view to list books currently borrowed by the logged-in member.
@@ -376,7 +369,7 @@ def my_borrowed_books(request):
     return render(request, 'member/my_borrowed_books.html', {'borrowed_loans': borrowed_loans})
 
 # --- Member Functionality: Request a Book (Placeholder) ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@user_passes_test(is_member)
 def request_book(request):
     """
     Member view to request a book (placeholder for future functionality).
@@ -394,7 +387,7 @@ def user_profile(request, username):
     """
     Displays a user's profile.
     """
-    target_user = get_object_or_404(CustomUser, username=username) # Use CustomUser
+    target_user = get_object_or_404(CustomUser, username=username)
 
     context = {
         'target_user': target_user,
@@ -403,12 +396,12 @@ def user_profile(request, username):
     }
     return render(request, 'user_profile.html', context)
 
-@user_passes_test(lambda u: is_admin(u) or is_librarian(u), login_url=settings.LOGIN_URL)
+@user_passes_test(lambda u: is_admin(u) or is_librarian(u))
 def user_assigned_books_view(request, username):
     """
     Displays books assigned to a specific user (for admin/librarian).
     """
-    target_user = get_object_or_404(CustomUser, username=username) # Use CustomUser
+    target_user = get_object_or_404(CustomUser, username=username)
     assigned_loans = Loan.objects.filter(user=target_user, return_date__isnull=True)
     context = {
         'target_user': target_user,
