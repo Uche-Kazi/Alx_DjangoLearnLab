@@ -3,8 +3,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.contrib.auth.views import LoginView # <-- ADDED THIS IMPORT
 from django.contrib.auth.models import Group, User
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
@@ -13,7 +14,7 @@ from .forms import CustomUserCreationForm, UserRoleAssignmentForm
 from .models import UserProfile, Book, Loan, Author
 from django.utils import timezone
 from datetime import timedelta
-from django.conf import settings # Import settings
+from django.conf import settings
 
 # --- Helper functions for role checking ---
 def _get_user_profile_and_ensure_group(user):
@@ -162,27 +163,39 @@ def dashboard(request):
 
 # --- Role-Based Dashboard Views ---
 
-# Using user_passes_test with settings.LOGIN_URL for checker compatibility
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+# Implementing direct role check and HttpResponseForbidden
+@login_required
 def admin_view(request):
     """
     Admin dashboard view. Accessible only by users with the 'Admin' role.
     """
-    return render(request, 'admin_view.html')
+    if is_admin(request.user):
+        return render(request, 'admin_view.html')
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def librarian_view(request):
     """
     Librarian dashboard view. Accessible only by users with the 'Librarian' role.
     """
-    return render(request, 'librarian_view.html')
+    if is_librarian(request.user):
+        return render(request, 'librarian_view.html')
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@login_required
 def member_view(request):
     """
     Member dashboard view. Accessible only by users with the 'Member' role.
     """
-    return render(request, 'member_view.html')
+    if is_member(request.user):
+        return render(request, 'member_view.html')
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- Error Page for Unauthorized Access ---
 def error_page(request):
@@ -190,19 +203,27 @@ def error_page(request):
     return render(request, 'error_page.html', {'message': 'You do not have permission to access this page.'})
 
 # --- Admin Functionality: Manage Users ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@login_required
 def manage_users(request):
     """
     Admin view to list all users and allow role assignment.
     """
-    users = User.objects.all().order_by('username')
-    return render(request, 'admin/manage_users.html', {'users': users})
+    if is_admin(request.user):
+        users = User.objects.all().order_by('username')
+        return render(request, 'admin/manage_users.html', {'users': users})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@login_required
 def assign_role(request, user_id):
     """
     Admin view to assign roles to a specific user.
     """
+    if not is_admin(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     user_to_assign = get_object_or_404(User, pk=user_id)
     user_profile = _get_user_profile_and_ensure_group(user_to_assign) # Use helper
 
@@ -237,44 +258,60 @@ def assign_role(request, user_id):
     return render(request, 'admin/assign_role.html', {'form': form, 'user_to_assign': user_to_assign})
 
 # --- Admin Functionality: Manage Groups (Optional, but good for completeness) ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@login_required
 def manage_groups(request):
     """
     Admin view to list and manage Django groups.
     """
-    groups = Group.objects.all().order_by('name')
-    return render(request, 'admin/manage_groups.html', {'groups': groups})
+    if is_admin(request.user):
+        groups = Group.objects.all().order_by('name')
+        return render(request, 'admin/manage_groups.html', {'groups': groups})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- Admin Functionality: View All Users (for dashboard link) ---
-@user_passes_test(is_admin, login_url=settings.LOGIN_URL)
+@login_required
 def admin_user_list(request):
     """Admin view to list all users with their current roles."""
-    users_with_roles = []
-    for user in User.objects.all().order_by('username'):
-        role = "N/A"
-        # Ensure that the user's profile is fetched or created before checking role
-        user_profile = _get_user_profile_and_ensure_group(user)
-        if user_profile.role == UserProfile.ADMIN:
-            role = UserProfile.ADMIN
-        elif user_profile.role == UserProfile.LIBRARIAN:
-            role = UserProfile.LIBRARIAN
-        elif user_profile.role == UserProfile.MEMBER:
-            role = UserProfile.MEMBER
-        users_with_roles.append({'user': user, 'role': role})
-    return render(request, 'admin/admin_user_list.html', {'users_with_roles': users_with_roles})
+    if is_admin(request.user):
+        users_with_roles = []
+        for user in User.objects.all().order_by('username'):
+            role = "N/A"
+            # Ensure that the user's profile is fetched or created before checking role
+            user_profile = _get_user_profile_and_ensure_group(user)
+            if user_profile.role == UserProfile.ADMIN:
+                role = UserProfile.ADMIN
+            elif user_profile.role == UserProfile.LIBRARIAN:
+                role = UserProfile.LIBRARIAN
+            elif user_profile.role == UserProfile.MEMBER:
+                role = UserProfile.MEMBER
+            users_with_roles.append({'user': user, 'role': role})
+        return render(request, 'admin/admin_user_list.html', {'users_with_roles': users_with_roles})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- Librarian Functionality: Manage Books ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def manage_books(request):
     """
     Librarian view to add, edit, or delete books.
     """
-    books = Book.objects.all().order_by('title')
-    return render(request, 'librarian/manage_books.html', {'books': books})
+    if is_librarian(request.user):
+        books = Book.objects.all().order_by('title')
+        return render(request, 'librarian/manage_books.html', {'books': books})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def add_book(request):
     """Librarian view to add a new book."""
+    if not is_librarian(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     if request.method == 'POST':
         title = request.POST.get('title')
         author_name = request.POST.get('author')
@@ -301,9 +338,13 @@ def add_book(request):
             messages.error(request, 'Please fill in all required fields.')
     return render(request, 'librarian/add_book.html')
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def edit_book(request, book_id):
     """Librarian view to edit an existing book."""
+    if not is_librarian(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     book = get_object_or_404(Book, pk=book_id)
     if request.method == 'POST':
         book.title = request.POST.get('title')
@@ -322,9 +363,13 @@ def edit_book(request, book_id):
         return redirect('relationship_app:manage_books')
     return render(request, 'librarian/edit_book.html', {'book': book})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def delete_book(request, book_id):
     """Librarian view to delete a book."""
+    if not is_librarian(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     book = get_object_or_404(Book, pk=book_id)
     if request.method == 'POST':
         book.delete()
@@ -333,17 +378,25 @@ def delete_book(request, book_id):
     return render(request, 'librarian/delete_book_confirm.html', {'book': book})
 
 # --- Librarian Functionality: Handle Loans ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def handle_loans(request):
     """
     Librarian view to manage book loans (borrow, return).
     """
-    loans = Loan.objects.all().order_by('-loan_date')
-    return render(request, 'librarian/handle_loans.html', {'loans': loans})
+    if is_librarian(request.user):
+        loans = Loan.objects.all().order_by('-loan_date')
+        return render(request, 'librarian/handle_loans.html', {'loans': loans})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def borrow_book_librarian(request):
     """Librarian view to facilitate a book loan for a member."""
+    if not is_librarian(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     if request.method == 'POST':
         book_id = request.POST.get('book_id')
         member_id = request.POST.get('member_id')
@@ -367,9 +420,13 @@ def borrow_book_librarian(request):
     members = User.objects.filter(userprofile__role=UserProfile.MEMBER)
     return render(request, 'librarian/borrow_book_librarian.html', {'books': books, 'members': members})
 
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def return_book_librarian(request, loan_id):
     """Librarian view to mark a book as returned."""
+    if not is_librarian(request.user):
+        messages.error(request, "You are not authorized to perform this action.")
+        return HttpResponseForbidden("You are not authorized to perform this action.")
+
     loan = get_object_or_404(Loan, pk=loan_id)
     if request.method == 'POST':
         if not loan.return_date:
@@ -384,43 +441,59 @@ def return_book_librarian(request, loan_id):
     return render(request, 'librarian/return_book_librarian.html', {'loan': loan})
 
 # --- Librarian Functionality: View Members ---
-@user_passes_test(is_librarian, login_url=settings.LOGIN_URL)
+@login_required
 def view_members(request):
     """Librarian view to list all members."""
-    members = User.objects.filter(userprofile__role=UserProfile.MEMBER).order_by('username')
-    return render(request, 'librarian/view_members.html', {'members': members})
+    if is_librarian(request.user):
+        members = User.objects.filter(userprofile__role=UserProfile.MEMBER).order_by('username')
+        return render(request, 'librarian/view_members.html', {'members': members})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 
 # --- Member Functionality: View All Books ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@login_required
 def book_list(request):
     """
     Member view to list all available books.
     """
-    books = Book.objects.filter(available_copies__gt=0).order_by('title')
-    return render(request, 'relationship_app/book_list.html', {'books': books})
+    if is_member(request.user):
+        books = Book.objects.filter(available_copies__gt=0).order_by('title')
+        return render(request, 'relationship_app/book_list.html', {'books': books})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- Member Functionality: View My Borrowed Books ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@login_required
 def my_borrowed_books(request):
     """
     Member view to list books currently borrowed by the logged-in member.
     """
-    borrowed_loans = Loan.objects.filter(user=request.user, return_date__isnull=True).order_by('-loan_date')
-    return render(request, 'member/my_borrowed_books.html', {'borrowed_loans': borrowed_loans})
+    if is_member(request.user):
+        borrowed_loans = Loan.objects.filter(user=request.user, return_date__isnull=True).order_by('-loan_date')
+        return render(request, 'member/my_borrowed_books.html', {'borrowed_loans': borrowed_loans})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- Member Functionality: Request a Book (Placeholder) ---
-@user_passes_test(is_member, login_url=settings.LOGIN_URL)
+@login_required
 def request_book(request):
     """
     Member view to request a book (placeholder for future functionality).
     """
-    if request.method == 'POST':
-        messages.info(request, "Book request functionality is under development.")
-        return redirect('relationship_app:member_dashboard')
-    
-    unavailable_books = Book.objects.filter(available_copies=0).order_by('title')
-    return render(request, 'member/request_book.html', {'unavailable_books': unavailable_books})
+    if is_member(request.user):
+        if request.method == 'POST':
+            messages.info(request, "Book request functionality is under development.")
+            return redirect('relationship_app:member_dashboard')
+        
+        unavailable_books = Book.objects.filter(available_copies=0).order_by('title')
+        return render(request, 'member/request_book.html', {'unavailable_books': unavailable_books})
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
 
 # --- User Profile View ---
 # This view is generally accessible to any logged-in user to see profiles,
@@ -441,15 +514,19 @@ def user_profile(request, username):
     }
     return render(request, 'user_profile.html', context)
 
-@user_passes_test(lambda u: is_admin(u) or is_librarian(u), login_url=settings.LOGIN_URL)
+@login_required
 def user_assigned_books_view(request, username):
     """
     Displays books assigned to a specific user (for admin/librarian).
     """
-    target_user = get_object_or_404(User, username=username)
-    assigned_loans = Loan.objects.filter(user=target_user, return_date__isnull=True)
-    context = {
-        'target_user': target_user,
-        'assigned_loans': assigned_loans
-    }
-    return render(request, 'user_assigned_books.html', context)
+    if is_admin(request.user) or is_librarian(request.user):
+        target_user = get_object_or_404(User, username=username)
+        assigned_loans = Loan.objects.filter(user=target_user, return_date__isnull=True)
+        context = {
+            'target_user': target_user,
+            'assigned_loans': assigned_loans
+        }
+        return render(request, 'user_assigned_books.html', context)
+    else:
+        messages.error(request, "You are not authorized to access this page.")
+        return HttpResponseForbidden("You are not authorized to access this page.")
