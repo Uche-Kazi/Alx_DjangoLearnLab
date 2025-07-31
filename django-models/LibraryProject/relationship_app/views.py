@@ -1,7 +1,8 @@
 # LibraryProject/relationship_app/views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test, permission_required # Import permission_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import permission_required # <--- MOVED TO ITS OWN LINE
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
@@ -106,6 +107,7 @@ def manage_books(request):
 
 
 @user_passes_test(is_librarian, login_url='relationship_app:error_page')
+@permission_required('relationship_app.can_add_book', login_url='relationship_app:error_page')
 def add_book(request):
     # This view is now redundant if manage_books handles both display and add.
     # We'll keep the permission_required here just in case it's used directly,
