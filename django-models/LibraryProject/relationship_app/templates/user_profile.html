@@ -1,5 +1,5 @@
 {# LibraryProject/relationship_app/templates/user_profile.html #}
-{% extends 'relationship_app/base.html' %}
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
 
 {% block title %}User Profile: {{ target_user.username }}{% endblock %}
 

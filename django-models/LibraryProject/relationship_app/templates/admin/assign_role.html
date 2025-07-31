@@ -1,6 +1,6 @@
 {# LibraryProject/relationship_app/templates/admin/assign_role.html #}
 
-{% extends 'relationship_app/base.html' %}
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
 {% load crispy_forms_tags %} {# Load crispy forms tags for rendering the form #}
 
 {% block title %}Assign Role to {{ user_to_assign.username }}{% endblock %}

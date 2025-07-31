@@ -11,7 +11,6 @@ class CustomUser(AbstractUser):
     Extends the built-in AbstractUser model with a 'role' field
     and other profile information.
     """
-    # Define role choices as constants directly on CustomUser
     ADMIN = 'Admin'
     LIBRARIAN = 'Librarian'
     MEMBER = 'Member'
@@ -22,12 +21,6 @@ class CustomUser(AbstractUser):
         (MEMBER, 'Member'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=MEMBER)
-
-    # You can move other fields from your old UserProfile here if they were essential
-    # For example:
-    # date_of_birth = models.DateField(null=True, blank=True)
-    # address = models.CharField(max_length=300, blank=True, null=True)
-    # phone_number = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return self.username
@@ -67,6 +60,16 @@ class Book(models.Model):
     def __str__(self):
         return f"{self.title} by {self.author.first_name} {self.author.last_name}" if self.author else self.title
 
+    # --- Custom Permissions for Book Model ---
+    class Meta:
+        permissions = [
+            ("can_add_book", "Can add book entries"),
+            ("can_change_book", "Can change book entries"),
+            ("can_delete_book", "Can delete book entries"),
+        ]
+        # You might also want to set default_permissions if you want to override Django's default add/change/delete
+        # default_permissions = ('add', 'change', 'delete', 'view') # Example: ensures default permissions are also present
+
 class Library(models.Model):
     """
     Represents a physical library location.
@@ -94,10 +97,6 @@ class Librarian(models.Model):
     def __str__(self):
         return f"Librarian: {self.user.username} ({self.employee_id})"
 
-# UserProfile model is removed
-# class UserProfile(models.Model):
-#     ...
-
 class Loan(models.Model):
     """
     Represents a loan of a book to a user (member).
@@ -117,8 +116,3 @@ class Loan(models.Model):
         unique_together = ('book', 'user', 'return_date')
         verbose_name = "Book Loan"
         verbose_name_plural = "Book Loans"
-
-# post_save signal for UserProfile is removed
-# @receiver(post_save, sender=User)
-# def create_or_update_user_profile(sender, instance, created, **kwargs):
-#     ...

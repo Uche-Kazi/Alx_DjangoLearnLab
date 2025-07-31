@@ -1,5 +1,5 @@
 {# LibraryProject/relationship_app/templates/dashboard.html #}
-{% extends 'relationship_app/base.html' %}
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 text-center">
@@ -11,3 +11,10 @@
     </div>
 </div>
 {% endblock %}
+```
+
+**Summary of Changes:**
+
+* The `{% extends 'relationship_app/base.html' %}` has been changed to `{% extends 'base.html' %}`.
+
+Please provide the content of the next file: `LibraryProject/relationship_app/templates/error_page.ht

@@ -1,6 +1,6 @@
 {# LibraryProject/relationship_app/templates/registration/login.html #}
 
-{% extends 'relationship_app/base.html' %} {# <-- ENSURE THIS IS NAMESPACED #}
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
 {% load crispy_forms_tags %} {# Needed if you use crispy forms for the login form #}
 
 {% block title %}Login{% endblock %}
@@ -27,7 +27,7 @@
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 transform hover:scale-105 shadow-lg">Login</button>
     </form>
     <p class="text-center text-gray-600 text-sm mt-4">
-        Don't have an account? <a href="{% url 'relationship_app:register' %}" class="text-blue-600 hover:underline font-medium">Register here</a>. {# <-- FIX THIS LINE #}
+        Don't have an account? <a href="{% url 'relationship_app:register' %}" class="text-blue-600 hover:underline font-medium">Register here</a>.
     </p>
 </div>
 {% endblock %}

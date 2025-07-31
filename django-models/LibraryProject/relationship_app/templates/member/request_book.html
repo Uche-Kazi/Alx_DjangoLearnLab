@@ -1,40 +1,39 @@
-    {# LibraryProject/relationship_app/templates/member/request_book.html #}
+{# LibraryProject/relationship_app/templates/member/request_book.html #}
 
-    {% extends 'relationship_app/base.html' %}
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
 
-    {% block title %}Request Book{% endblock %}
+{% block title %}Request Book{% endblock %}
 
-    {% block content %}
-    <div class="max-w-xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200 text-center">
-        <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Request a Book</h2>
-        <p class="text-lg text-gray-700 mb-4">This feature is under development. You can view books that are currently unavailable below.</p>
+{% block content %}
+<div class="max-w-xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200 text-center">
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Request a Book</h2>
+    <p class="text-lg text-gray-700 mb-4">This feature is under development. You can view books that are currently unavailable below.</p>
 
-        {% if messages %}
-            <ul class="mb-4">
-                {% for message in messages %}
-                    <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
-                        {{ message }}
-                    </li>
+    {% if messages %}
+        <ul class="mb-4">
+            {% for message in messages %}
+                <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if unavailable_books %}
+        <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Currently Unavailable Books:</h3>
+        <div class="overflow-x-auto">
+            <ul class="list-disc list-inside text-left mx-auto max-w-md">
+                {% for book in unavailable_books %}
+                    <li class="py-1 text-gray-700">{{ book.title }} by {{ book.author }} (ISBN: {{ book.isbn|default:"N/A" }})</li>
                 {% endfor %}
             </ul>
-        {% endif %}
+        </div>
+    {% else %}
+        <p class="text-lg text-gray-600 mt-8">All books are currently available!</p>
+    {% endif %}
 
-        {% if unavailable_books %}
-            <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Currently Unavailable Books:</h3>
-            <div class="overflow-x-auto">
-                <ul class="list-disc list-inside text-left mx-auto max-w-md">
-                    {% for book in unavailable_books %}
-                        <li class="py-1 text-gray-700">{{ book.title }} by {{ book.author }} (ISBN: {{ book.isbn|default:"N/A" }})</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% else %}
-            <p class="text-lg text-gray-600 mt-8">All books are currently available!</p>
-        {% endif %}
-
-        <p class="text-center text-gray-600 text-sm mt-6">
-            <a href="{% url 'relationship_app:member_dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Member Dashboard</a>
-        </p>
-    </div>
-    {% endblock %}
-    
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:member_dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Member Dashboard</a>
+    </p>
+</div>
+{% endblock %}

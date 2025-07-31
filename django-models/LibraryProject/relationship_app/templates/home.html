@@ -1,6 +1,6 @@
 <!-- LibraryProject/relationship_app/templates/home.html -->
 
-{% extends 'relationship_app/base.html' %} {# <-- FIX THIS LINE #}
+{% extends 'base.html' %} {# Correctly extends the project-level base.html #}
 
 {% block title %}Welcome to the Library{% endblock %}
 
@@ -13,7 +13,7 @@
         <a href="{% url 'relationship_app:register' %}" class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
             Register
         </a>
-        <a href="{% url 'relationship_app:login' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
+        <a href="{% url 'login' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
             Login
         </a>
         <a href="{% url 'relationship_app:book_list' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
