@@ -1,0 +1,17 @@
+{# LibraryProject/relationship_app/templates/member_view.html #}
+
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
+
+{% block title %}Member Dashboard{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-xl max-w-2xl mx-auto text-center mt-10 border border-gray-200">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome, Member!</h2>
+    <p class="text-lg text-gray-700 mb-4">Explore books and manage your loans.</p>
+    <div class="space-y-4">
+        <a href="{% url 'relationship_app:book_list' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">View All Books</a>
+        <a href="{% url 'relationship_app:my_borrowed_books' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">My Borrowed Books</a>
+        <a href="{% url 'relationship_app:request_book' %}" class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Request a Book</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+Library: {{ library.name }}
+Books in Library:
+{% for book in library.books.all %}
+{{ book.title }} by {{ book.author.name }} (Published {{ book.publication_year }})
+{% endfor %}
