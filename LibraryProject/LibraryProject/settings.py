@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts.apps.AccountsConfig',
+    # Changed from 'accounts.apps.AccountsConfig' to 'bookshelf.apps.BookshelfConfig'
+    'bookshelf.apps.BookshelfConfig',
 ]
 
 MIDDLEWARE = [
@@ -124,4 +125,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'accounts.CustomUser'
+# We changed this to point to the new location of the CustomUser model
+AUTH_USER_MODEL = 'bookshelf.CustomUser'
