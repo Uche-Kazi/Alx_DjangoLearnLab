@@ -1,0 +1,72 @@
+{# LibraryProject/relationship_app/templates/librarian/handle_loans.html #}
+
+{% extends 'base.html' %} {# CORRECTED: Now extends the project-level base.html #}
+
+{% block title %}Handle Loans{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-10 border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Manage Book Loans</h2>
+
+    {% if messages %}
+        <ul class="mb-4">
+            {% for message in messages %}
+                <li class="p-3 rounded-md {% if message.tags %}bg-{{ message.tags }}-100 text-{{ message.tags }}-700{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="mb-6 text-center">
+        <a href="{% url 'relationship_app:borrow_book_librarian' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Borrow Book</a>
+    </div>
+
+    {% if loans %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Book Title</th>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Member</th>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Loan Date</th>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Due Date</th>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Return Date</th>
+                    <th class="py-3 px-6 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for loan in loans %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-4 px-6 whitespace-nowrap text-sm font-medium text-gray-900">{{ loan.book.title }}</td>
+                    <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">{{ loan.user.username }}</td>
+                    <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">{{ loan.loan_date|date:"M d, Y" }}</td>
+                    <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">{{ loan.due_date|date:"M d, Y" }}</td>
+                    <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-700">
+                        {% if loan.return_date %}
+                            {{ loan.return_date|date:"M d, Y" }}
+                        {% else %}
+                            <span class="text-red-500">Not Returned</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-6 whitespace-nowrap text-sm">
+                        {% if not loan.return_date %}
+                            <a href="{% url 'relationship_app:return_book_librarian' loan_id=loan.id %}" class="text-green-600 hover:text-green-800 font-medium">Return</a>
+                        {% else %}
+                            <span class="text-gray-500">N/A</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-center text-gray-600 text-lg">No loans to display.</p>
+    {% endif %}
+
+    <p class="text-center text-gray-600 text-sm mt-6">
+        <a href="{% url 'relationship_app:librarian_dashboard' %}" class="text-blue-600 hover:underline font-medium">&larr; Back to Librarian Dashboard</a>
+    </p>
+</div>
+{% endblock %}

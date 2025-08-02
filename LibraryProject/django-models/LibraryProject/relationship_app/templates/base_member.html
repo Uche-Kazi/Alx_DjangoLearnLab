@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Library App{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles if needed */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-700 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'relationship_app:member_dashboard' %}" class="text-white text-2xl font-bold rounded-lg px-3 py-2 hover:bg-blue-600 transition duration-300">
+                Member Dashboard
+            </a>
+            <div class="space-x-4 flex items-center">
+                <a href="{% url 'relationship_app:book_list' %}" class="nav-link text-white hover:text-blue-200 px-3 py-2 rounded-lg hover:bg-blue-600">
+                    Available Books
+                </a>
+                <a href="{% url 'relationship_app:my_borrowed_books' %}" class="nav-link text-white hover:text-blue-200 px-3 py-2 rounded-lg hover:bg-blue-600">
+                    My Borrowed Books
+                </a>
+                <a href="{% url 'relationship_app:request_book' %}" class="nav-link text-white hover:text-blue-200 px-3 py-2 rounded-lg hover:bg-blue-600">
+                    Request Book
+                </a>
+                <a href="{% url 'logout' %}" class="nav-link bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
+                    Logout ({{ user.username }})
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-4">
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="p-3 rounded-lg text-white {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %} mb-2">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        <!-- Content from child templates will be inserted here -->
+        {% endblock %}
+    </div>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+        <p>&copy; 2025 Library App. All rights reserved.</p>
+    </footer>
+</body>
+</html>

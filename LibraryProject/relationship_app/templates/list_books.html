@@ -1,0 +1,80 @@
+<!-- LibraryProject/relationship_app/templates/relationship_app/list_books.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Books</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #63b3ed; /* Blue for headings */
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4a5568;
+            padding-bottom: 10px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 600px;
+            background-color: #2d3748; /* Slightly lighter dark background for list */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #4a5568;
+            font-size: 1.1em;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        form {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #e53e3e; /* Red for logout */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #c53030;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <h1>Books Available:</h1>
+    <ul>
+        {% for book in books %}
+        <li>{{ book.title }} by {{ book.author.name }}</li>
+        {% endfor %}
+    </ul>
+
+    <form action="{% url 'relationship_app:logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>
