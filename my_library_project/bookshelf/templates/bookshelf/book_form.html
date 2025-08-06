@@ -1,0 +1,17 @@
+<!-- my_library_project/bookshelf/templates/bookshelf/book_form.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ form_title }}</title>
+</head>
+<body>
+    <h1>{{ form_title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+    <a href="{% url 'book_list' %}">Cancel</a>
+</body>
+</html>
