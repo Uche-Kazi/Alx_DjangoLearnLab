@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # CRITICAL: Settings module now points to the inner project package
+    # CRITICAL FIX: The settings module must point to the nested
+    # 'LibraryProject' package to correctly find the settings file.
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'LibraryProject.LibraryProject.settings')
     try:
         from django.core.management import execute_from_command_line

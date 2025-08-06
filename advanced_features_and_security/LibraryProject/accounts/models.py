@@ -1,17 +1,13 @@
+# my_library_project/accounts/models.py
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
     """
     Custom user manager to handle user and superuser creation.
-    We are inheriting from BaseUserManager because our CustomUser model
-    will be a proxy of AbstractUser, not a complete replacement.
     """
     def create_user(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a regular user with the given email and password.
-        The email field is used as the unique identifier.
-        """
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
@@ -21,10 +17,6 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a superuser with the given email and password.
-        Superusers are required to have all permissions.
-        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -39,26 +31,33 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     """
     Custom user model that extends AbstractUser.
-    We will use the 'email' field as the unique identifier for authentication
-    instead of the default 'username'.
     """
-    # The default username field is already provided by AbstractUser,
-    # but we are making 'email' the unique identifier for auth.
     email = models.EmailField(unique=True)
-
-    # Add the custom fields required by the task description
     date_of_birth = models.DateField(null=True, blank=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
 
-    # Replace the username with email for authentication
+    # CRITICAL FIX: Add unique related_name arguments to avoid clashes with the default User model.
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+        related_name='customuser_set',  # Unique related name
+        related_query_name='customuser',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name='customuser_set',  # Unique related name
+        related_query_name='customuser',
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    # Use the custom manager
     objects = CustomUserManager()
 
     def __str__(self):
-        """
-        Returns a string representation of the user.
-        """
         return self.email

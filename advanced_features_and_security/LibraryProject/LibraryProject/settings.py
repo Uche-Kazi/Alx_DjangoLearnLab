@@ -10,18 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# This configuration correctly handles the nested LibraryProject directory.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1q-@8s-y98z%w3@r8q8y&t$!28-!v=y9p@=2$l$7x5=8w$!v#p'
+SECRET_KEY = 'django-insecure-q&e$#%^&w-5490123'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Changed from 'accounts.apps.AccountsConfig' to 'bookshelf.apps.BookshelfConfig'
-    'bookshelf.apps.BookshelfConfig',
+    # CRITICAL FIX: The apps must be referenced by their full path
+    # to their AppConfig class, since they are nested.
+    'LibraryProject.bookshelf.apps.BookshelfConfig',
+    'LibraryProject.accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -52,7 +54,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'LibraryProject.urls'
+ROOT_URLCONF = 'LibraryProject.LibraryProject.urls'
 
 TEMPLATES = [
     {
@@ -70,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'LibraryProject.wsgi.application'
+WSGI_APPLICATION = 'LibraryProject.LibraryProject.wsgi.application'
 
 
 # Database
@@ -124,6 +126,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# We changed this to point to the new location of the CustomUser model
-AUTH_USER_MODEL = 'bookshelf.CustomUser'
