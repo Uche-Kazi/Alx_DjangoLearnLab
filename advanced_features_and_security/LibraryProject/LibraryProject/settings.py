@@ -215,3 +215,30 @@ CSP_BASE_URI = ("'self'",)
 # CSP_REPORT_URI = ('/csp-report/',) # Example: requires a view to handle reports
 
 # CSP_REPORT_ONLY = True # Set to True to only report violations, not block them. Useful for testing.
+
+# --- HTTPS AND HSTS SETTINGS (Added for Step 1 of the new task) ---
+
+# SECURE_SSL_REDIRECT:
+# Set to True to redirect all non-HTTPS requests to HTTPS.
+# This ensures that all traffic to your site uses a secure connection.
+# IMPORTANT: This should only be True if your server is configured to serve HTTPS.
+SECURE_SSL_REDIRECT = True
+
+# SECURE_HSTS_SECONDS:
+# Sets the Strict-Transport-Security header. This header tells browsers to
+# only access the site via HTTPS for the specified duration (in seconds).
+# 31536000 seconds = 1 year. This helps prevent downgrade attacks and cookie hijacking.
+# Only enable this after you are certain your site is fully functional over HTTPS.
+SECURE_HSTS_SECONDS = 31536000 # 1 year
+
+# SECURE_HSTS_INCLUDE_SUBDOMAINS:
+# When True, the HSTS policy applies to all subdomains as well.
+# This is recommended for broader protection.
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+# SECURE_HSTS_PRELOAD:
+# When True, allows your domain to be submitted to the HSTS preload list,
+# a list of sites hardcoded into browsers to always use HTTPS.
+# This provides the strongest protection, but requires careful consideration
+# as it's difficult to undo. Only enable if you are absolutely sure about HTTPS.
+SECURE_HSTS_PRELOAD = True
