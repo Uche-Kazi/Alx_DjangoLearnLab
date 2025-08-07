@@ -1,4 +1,4 @@
-# my_library_project/bookshelf/urls.py
+# advanced_features_and_security/LibraryProject/bookshelf/urls.py
 
 from django.urls import path
 from . import views
@@ -8,4 +8,5 @@ urlpatterns = [
     path('create/', views.book_create, name='book_create'),
     path('edit/<int:pk>/', views.book_edit, name='book_edit'),
     path('delete/<int:pk>/', views.book_delete, name='book_delete'),
+    path('example-form/', views.example_form_view, name='example_form_view'), # Added URL for ExampleForm
 ]
