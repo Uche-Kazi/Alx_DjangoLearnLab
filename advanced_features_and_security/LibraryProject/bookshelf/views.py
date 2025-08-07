@@ -3,7 +3,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import permission_required
 from .models import Book
-from .forms import BookForm, ExampleForm # Added ExampleForm import
+# CRITICAL FIX: Ensure ExampleForm is imported correctly on this line.
+from .forms import BookForm, ExampleForm
 
 def book_list(request):
     """
@@ -46,7 +47,7 @@ def book_delete(request, pk):
     """
     View to delete a book. Requires the 'can_delete' permission.
     """
-    book = get_object_or_04(Book, pk=pk)
+    book = get_object_or_404(Book, pk=pk)
     if request.method == 'POST':
         book.delete()
         return redirect('book_list')
@@ -66,4 +67,3 @@ def example_form_view(request):
     else:
         form = ExampleForm()
     return render(request, 'bookshelf/form_example.html', {'form': form, 'form_title': 'Example Form'})
-
