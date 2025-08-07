@@ -242,3 +242,11 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 # This provides the strongest protection, but requires careful consideration
 # as it's difficult to undo. Only enable if you are absolutely sure about HTTPS.
 SECURE_HSTS_PRELOAD = True
+
+# SECURE_PROXY_SSL_HEADER:
+# This setting is crucial when Django is deployed behind a reverse proxy (like Nginx or Apache)
+# that handles SSL termination. The proxy forwards the request to Django over HTTP,
+# but sets a header (commonly X-Forwarded-Proto) to indicate the original protocol (HTTPS).
+# Django uses this setting to trust that header and correctly identify the request as secure.
+# The format is a tuple: ('Header-Name', 'Header-Value').
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
