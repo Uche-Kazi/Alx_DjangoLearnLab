@@ -1,3 +1,5 @@
+# advanced_features_and_security/LibraryProject/LibraryProject/settings.py
+
 """
 Django settings for LibraryProject project.
 
@@ -24,9 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = 'django-insecure-q&e$#%^&w-5490123'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DEBUG to False in production environments to prevent sensitive
+# information from being exposed in error pages.
+DEBUG = False # Set to False for production
 
-ALLOWED_HOSTS = []
+# Add your production domain(s) here. For local development, '127.0.0.1' and 'localhost' are common.
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -46,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware', # UNCOMMENTED: Add this line for CSP after installing django-csp
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -126,3 +132,86 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- SECURITY SETTINGS ---
+
+# SECURE_BROWSER_XSS_FILTER:
+# Enables the X-XSS-Protection header, which helps prevent Cross-Site Scripting (XSS) attacks.
+# When set to True, it tells the browser to enable its built-in XSS filter.
+SECURE_BROWSER_XSS_FILTER = True # Added for XSS protection
+
+# X_FRAME_OPTIONS:
+# Prevents clickjacking attacks by setting the X-Frame-Options header.
+# 'DENY' means the page cannot be displayed in a frame, regardless of the site attempting to do so.
+# 'SAMEORIGIN' allows the page to be displayed in a frame on the same origin as the page itself.
+X_FRAME_OPTIONS = 'DENY' # Added for clickjacking protection
+
+# SECURE_CONTENT_TYPE_NOSNIFF:
+# Prevents browsers from MIME-sniffing a response away from the declared content-type.
+# This helps prevent XSS attacks where an attacker might try to upload a malicious file
+# with a disguised content type (e.g., a JavaScript file disguised as an image).
+SECURE_CONTENT_TYPE_NOSNIFF = True # Added for MIME-sniffing protection
+
+# CSRF_COOKIE_SECURE:
+# Ensures that the CSRF cookie is only sent over a secure (HTTPS) connection.
+# This protects against man-in-the-middle attacks that could steal the CSRF token.
+CSRF_COOKIE_SECURE = True # Added for secure CSRF cookie transmission
+
+# SESSION_COOKIE_SECURE:
+# Ensures that the session cookie is only sent over a secure (HTTPS) connection.
+# This protects against session hijacking by ensuring the session ID is not
+# transmitted over unencrypted channels.
+SESSION_COOKIE_SECURE = True # Added for secure session cookie transmission
+
+# Note on HTTPS: For CSRF_COOKIE_SECURE and SESSION_COOKIE_SECURE to work effectively
+# and for other HTTPS-related security headers, your application should ideally
+# be served over HTTPS in a production environment.
+
+# --- CONTENT SECURITY POLICY (CSP) SETTINGS ---
+# These settings are used by django-csp middleware to generate the
+# Content-Security-Policy header.
+
+# Default policy: allow content from the same origin ('self').
+CSP_DEFAULT_SRC = ("'self'",)
+
+# Script sources: allow scripts from 'self'. If you use inline scripts,
+# you might need 'unsafe-inline' (not recommended) or nonces/hashes.
+CSP_SCRIPT_SRC = ("'self'",)
+
+# Style sources: allow styles from 'self'.
+# If you use inline styles, you might need 'unsafe-inline' or nonces/hashes.
+CSP_STYLE_SRC = ("'self'",)
+
+# Image sources: allow images from 'self'.
+CSP_IMG_SRC = ("'self'",)
+
+# Font sources: allow fonts from 'self'. If you use external fonts (e.g., Google Fonts),
+# you'd need to add their domains here (e.g., 'fonts.gstatic.com').
+CSP_FONT_SRC = ("'self'",)
+
+# Connect sources (for XMLHttpRequest, WebSockets, EventSource): allow from 'self'.
+CSP_CONNECT_SRC = ("'self'",)
+
+# Object sources (for <object>, <embed>, <applet>): default to 'none'.
+CSP_OBJECT_SRC = ("'none'",)
+
+# Frame sources (for <iframe>): default to 'none' to prevent clickjacking/framing.
+CSP_FRAME_SRC = ("'none'",)
+
+# Media sources (for <audio>, <video>): allow from 'self'.
+CSP_MEDIA_SRC = ("'self'",)
+
+# Form action sources: allow form submissions to 'self'.
+CSP_FORM_ACTION = ("'self'",)
+
+# Frame ancestors (for <frame>, <iframe>, <object>): 'none' prevents embedding your site.
+CSP_FRAME_ANCESTORS = ("'none'",)
+
+# Base URI (for <base> tag): allow 'self'.
+CSP_BASE_URI = ("'self'",)
+
+# Report URI: where CSP violation reports should be sent.
+# You would typically set up an endpoint to collect these reports.
+# CSP_REPORT_URI = ('/csp-report/',) # Example: requires a view to handle reports
+
+# CSP_REPORT_ONLY = True # Set to True to only report violations, not block them. Useful for testing.
