@@ -1,3 +1,5 @@
+# ~/Alx_DjangoLearnLab/api_project/api_project/settings.py
+
 """
 Django settings for api_project project.
 
@@ -38,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    # 'rest_framework.authtoken' provides Django REST Framework's Token Authentication system.
+    # It includes models for storing user tokens and views for generating them.
+    'rest_framework.authtoken',
     'api',
 ]
 
@@ -122,3 +127,17 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configure Django REST Framework settings for authentication and permissions.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # TokenAuthentication allows clients to authenticate by sending a token
+        # in the 'Authorization: Token <token_key>' HTTP header.
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # IsAuthenticated is a default permission that ensures only authenticated users
+        # can access views unless explicitly overridden in the view itself.
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
