@@ -1,15 +1,15 @@
 # ~/Alx_DjangoLearnLab/api_project/api/views.py
 
-from rest_framework import generics
-from .models import Book # Import your Book model
-from .serializers import BookSerializer # Import your BookSerializer
+from rest_framework import viewsets # Import viewsets
+from .models import Book
+from .serializers import BookSerializer
 
-class BookList(generics.ListAPIView):
+class BookViewSet(viewsets.ModelViewSet):
     """
-    API view to list all books.
-    - Retrieves all Book objects from the database.
-    - Uses BookSerializer to convert Book instances into JSON format.
+    A ViewSet for viewing and editing Book instances.
+    Provides full CRUD operations (list, create, retrieve, update, destroy).
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
 
+# Note: The previous BookList view is removed as BookViewSet handles listing.

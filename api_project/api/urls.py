@@ -1,10 +1,17 @@
 # ~/Alx_DjangoLearnLab/api_project/api/urls.py
 
-from django.urls import path
-from .views import BookList # Import your BookList API view
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter # Import DefaultRouter
+from .views import BookViewSet # Import your BookViewSet
+
+# Create a router instance
+router = DefaultRouter()
+# Register the BookViewSet with the router.
+# The 'books_all' prefix will be used for the URLs (e.g., /api/books_all/)
+router.register(r'books_all', BookViewSet, basename='book_all')
 
 urlpatterns = [
-    # Maps the 'books/' path to the BookList view.
-    # The 'name' argument is used for reverse lookups.
-    path('books/', BookList.as_view(), name='book-list'),
+    # Include all routes registered with the router.
+    # This automatically generates URLs for list, create, retrieve, update, delete operations.
+    path('', include(router.urls)),
 ]
