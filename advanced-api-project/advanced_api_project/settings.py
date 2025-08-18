@@ -1,4 +1,4 @@
-# ~/Alx_DjangoLearnLab/advanced-api-project/settings.py
+# ~/Alx_DjangoLearnLab/advanced-api-project/advanced_api_project/settings.py
 
 """
 Django settings for advanced_api_project project.
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third-party apps
     'rest_framework', # Added for Django REST Framework
+    'rest_framework.authtoken', # Add this line for Token Authentication
     # Your project apps
     'api', # Your custom 'api' app
 ]
@@ -128,3 +129,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django REST Framework Settings
+# Configure default authentication and permission classes globally
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication', # Enable Token authentication
+        'rest_framework.authentication.SessionAuthentication', # Keep session auth for browsable API
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly', # Default permission for all views
+    ]
+}
