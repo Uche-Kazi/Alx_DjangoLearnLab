@@ -1,99 +1,68 @@
 Advanced API Project: Book Management API
 This project demonstrates building a RESTful API for managing Authors and Books using Django and Django REST Framework.
 
-Features Implemented in this Task: Custom Views and Generic Views
-This section details the API endpoints for the Book model, implemented using Django REST Framework's Generic Views and Mixins, along with permission handling.
+Features Implemented in this Task: Filtering, Searching, and Ordering
+This section details the enhanced query capabilities added to the Book API endpoints, allowing consumers to efficiently filter, search, and sort book data.
 
 Views (api/views.py)
-We utilize DRF's generics.ListCreateAPIView and generics.RetrieveUpdateDestroyAPIView for efficient CRUD operations on the Book model.
+The BookListView has been updated to incorporate these functionalities using Django REST Framework's filter backends.
 
-BookListCreateView:
+BookListView Enhancements:
 
-Purpose: Handles listing all Book instances and creating new ones.
+Filtering: Implemented using django_filters.rest_framework.DjangoFilterBackend.
 
-HTTP Methods Handled:
+Filterable fields: title, author (by ID), publication_year.
 
-GET /api/books/: Retrieves a list of all books.
+Usage Example:
 
-POST /api/books/: Creates a new book.
+Get books by a specific title: GET /api/books/?title=1984
 
-Permissions: permissions.IsAuthenticatedOrReadOnly
+Get books by a specific author ID: GET /api/books/?author=1
 
-Unauthenticated users: Can perform GET requests (read-only).
+Get books published in a specific year: GET /api/books/?publication_year=1997
 
-Authenticated users: Can perform GET and POST requests.
+Searching: Implemented using rest_framework.filters.SearchFilter.
 
-Validation: Data validation (including custom publication_year validation) is handled automatically by the BookSerializer.
+Searchable fields: title, author__name (searches on the related Author's name).
 
-BookDetailView:
+Usage Example:
 
-Purpose: Handles retrieving, updating, and deleting a single Book instance by its ID.
+Search for "Harry Potter" in titles: GET /api/books/?search=Harry%20Potter
 
-HTTP Methods Handled:
+Search for books by author name containing "Stephen": GET /api/books/?search=Stephen
 
-GET /api/books/<int:pk>/: Retrieves a single book.
+Ordering: Implemented using rest_framework.filters.OrderingFilter.
 
-PUT /api/books/<int:pk>/: Fully updates an existing book.
+Orderable fields: title, publication_year.
 
-PATCH /api/books/<int:pk>/: Partially updates an existing book.
+Usage Example:
 
-DELETE /api/books/<int:pk>/: Deletes an existing book.
+Order by title (ascending): GET /api/books/?ordering=title
 
-Permissions: permissions.IsAuthenticatedOrReadOnly
+Order by publication year (descending): GET /api/books/?ordering=-publication_year
 
-Unauthenticated users: Can perform GET requests (read-only).
+Combined Usage: You can combine these parameters.
 
-Authenticated users: Can perform GET, PUT, PATCH, and DELETE requests.
+Example: Get books by Stephen E. Lucas, ordered by publication year descending:
+GET /api/books/?author=1&ordering=-publication_year
 
-Validation: Data validation is handled automatically by the BookSerializer.
+Global DRF Configuration (advanced_api_project/settings.py)
+The django_filters app has been added to INSTALLED_APPS to enable the filtering backend.
 
-URL Patterns (api/urls.py & advanced_api_project/urls.py)
-The following endpoints are configured:
-
-/api/books/ (Maps to BookListCreateView)
-
-GET: List all books.
-
-POST: Create a new book.
-
-/api/books/<int:pk>/ (Maps to BookDetailView)
-
-GET: Retrieve a book by ID.
-
-PUT: Update a book by ID.
-
-PATCH: Partially update a book by ID.
-
-DELETE: Delete a book by ID.
-
-Permissions (Global and View-Specific)
-Global Configuration (settings.py):
-REST_FRAMEWORK is configured to use TokenAuthentication by default for authentication and IsAuthenticatedOrReadOnly as the default permission class.
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ]
-}
-
-View-Specific Permissions:
-The permission_classes = [permissions.IsAuthenticatedOrReadOnly] is explicitly applied to BookListCreateView and BookDetailView, overriding any global default if they were different. This ensures:
-
-Anyone can read (view) the book data.
-
-Only authenticated users can modify (create, update, delete) book data.
+INSTALLED_APPS = [
+    # ...
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters', # New addition
+    # ...
+]
 
 How to Test
-To test these endpoints:
+To test these enhanced API endpoints:
 
 Ensure server is running: python manage.py runserver
 
-Obtain an Authentication Token:
-If you are testuser (password testpass123), use:
+Obtain an Authentication Token: If you are testuser (password testpass123), use:
 curl -X POST -H "Content-Type: application/json" -d '{"username": "testuser", "password": "testpass123"}' http://127.0.0.1:8000/api-token-auth/
 (Copy the token from the response).
 
@@ -101,5 +70,4 @@ Use curl (or Postman/Insomnia) with the following headers (for authenticated req
 Content-Type: application/json
 Authorization: Token YOUR_AUTH_TOKEN
 
-Example authenticated POST:
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Token YOUR_AUTH_TOKEN" -d '{"title": "New Book", "publication_year": 2024, "author": 1}' http://127.0.0.1:8000/api/books/
+Then, append the desired query parameters (?title=..., ?search=..., ?ordering=...) to http://127.0.0.1:8000/api/books/.

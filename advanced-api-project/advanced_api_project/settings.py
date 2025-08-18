@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework', # Added for Django REST Framework
     'rest_framework.authtoken', # Add this line for Token Authentication
+    'django_filters', # Added for filtering capabilities
     # Your project apps
     'api', # Your custom 'api' app
 ]
