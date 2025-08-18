@@ -1,8 +1,9 @@
 # ~/Alx_DjangoLearnLab/advanced-api-project/api/views.py
 
 from rest_framework import generics # For ListAPIView, CreateAPIView etc.
-from rest_framework import mixins # For combining functionalities
-from rest_framework import permissions # For permission classes
+from rest_framework import mixins # For combining functionalities (though not directly used in these split views)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated # CORRECT IMPORT
+
 from .models import Book
 from .serializers import BookSerializer
 
@@ -17,18 +18,20 @@ class BookListView(generics.ListAPIView):
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] # Read-only for unauthenticated
+    # CORRECT USAGE: Remove 'permissions.' prefix
+    permission_classes = [IsAuthenticatedOrReadOnly] # Read-only for unauthenticated
 
 # This view handles creating a new book.
 class BookCreateView(generics.CreateAPIView):
     """
     API view for creating a new book.
     Corresponds to 'CreateView' in the checker's requirements.
-    POST /api/books/
+    POST /api/books/create/
     """
     queryset = Book.objects.all() # Queryset is not strictly needed for CreateAPIView, but harmless.
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated] # Only authenticated users can create.
+    # CORRECT USAGE: Remove 'permissions.' prefix
+    permission_classes = [IsAuthenticated] # Only authenticated users can create.
 
 # This view handles retrieving a single book by ID.
 class BookRetrieveView(generics.RetrieveAPIView):
@@ -39,27 +42,29 @@ class BookRetrieveView(generics.RetrieveAPIView):
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] # Read-only for unauthenticated
+    # CORRECT USAGE: Remove 'permissions.' prefix
+    permission_classes = [IsAuthenticatedOrReadOnly] # Read-only for unauthenticated
 
 # This view handles updating an existing book.
 class BookUpdateView(generics.UpdateAPIView):
     """
     API view for modifying an existing book.
     Corresponds to 'UpdateView' in the checker's requirements.
-    PUT/PATCH /api/books/<int:pk>/
+    PUT/PATCH /api/books/update/
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated] # Only authenticated users can update.
+    # CORRECT USAGE: Remove 'permissions.' prefix
+    permission_classes = [IsAuthenticated] # Only authenticated users can update.
 
 # This view handles deleting a book.
 class BookDestroyView(generics.DestroyAPIView):
     """
     API view for removing a book.
     Corresponds to 'DeleteView' in the checker's requirements.
-    DELETE /api/books/<int:pk>/
+    DELETE /api/books/delete/
     """
     queryset = Book.objects.all()
     serializer_class = BookSerializer # Serializer not strictly needed for Destroy, but harmless.
-    permission_classes = [permissions.IsAuthenticated] # Only authenticated users can delete.
-
+    # CORRECT USAGE: Remove 'permissions.' prefix
+    permission_classes = [IsAuthenticated] # Only authenticated users can delete.
