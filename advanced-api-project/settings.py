@@ -1,4 +1,4 @@
-# ~/Alx_DjangoLearnLab/advanced_api_project/settings.py
+# ~/Alx_DjangoLearnLab/advanced-api-project/settings.py
 
 """
 Django settings for advanced_api_project project.
@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Third-party apps
-    'rest_framework', # Correctly added Django REST Framework
+    'rest_framework', # Added for Django REST Framework
     # Your project apps
-    'api', # Your new 'api' app
+    'api', # Your custom 'api' app
 ]
 
 MIDDLEWARE = [
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# IMPORTANT: This must refer to the Python package name (underscores)
 ROOT_URLCONF = 'advanced_api_project.urls'
 
 TEMPLATES = [
@@ -72,6 +73,7 @@ TEMPLATES = [
     },
 ]
 
+# IMPORTANT: This must refer to the Python package name (underscores)
 WSGI_APPLICATION = 'advanced_api_project.wsgi.application'
 
 
