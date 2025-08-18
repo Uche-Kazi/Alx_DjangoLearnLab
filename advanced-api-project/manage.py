@@ -1,3 +1,5 @@
+# ~/Alx_DjangoLearnLab/advanced-api-project/manage.py
+
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
@@ -6,7 +8,9 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api_project.settings')
+    # This line is correct for manage.py being in advanced-api-project/
+    # and pointing to advanced_api_project/settings.py
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'advanced_api_project.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
