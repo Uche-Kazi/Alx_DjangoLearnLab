@@ -1,33 +1,26 @@
-# Environments
-.env
-venv/
-env/
-*.sqlite3
-
 # Python
-*.pyc
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.memo
-.pytest_cache/
+env/
+venv/
+*.env
+.idea/ # For PyCharm/IntelliJ
+.vscode/ # For VS Code (can remove if you want to commit specific settings)
 
-# Django stuff:
-*.log
-*.pot
+# Django
+db.sqlite3
 /media
 /static
+*.log
+local_settings.py
+.DS_Store # macOS specific
+
+# OS generated files
+.DS_Store
+.localized
+Thumbs.db
+ehthumbs.db
+Desktop.ini
