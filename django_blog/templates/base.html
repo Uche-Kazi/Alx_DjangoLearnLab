@@ -1,0 +1,50 @@
+<!-- ~/Alx_DjangoLearnLab/django_blog/templates/base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Django Blog{% endblock title %}</title>
+    <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        header { background-color: #333; color: white; padding: 1em 0; text-align: center; }
+        nav { display: flex; justify-content: center; background-color: #444; padding: 0.5em 0; }
+        nav a { color: white; padding: 0.5em 1em; text-decoration: none; }
+        nav a:hover { background-color: #555; }
+        .container { max-width: 800px; margin: 2em auto; padding: 0 1em; background-color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        footer { text-align: center; padding: 1em 0; background-color: #333; color: white; margin-top: 2em; }
+        h1, h2 { color: #0056b3; }
+        ul { list-style: none; padding: 0; }
+        li { background-color: #e9e9e9; margin-bottom: 0.5em; padding: 1em; border-radius: 4px; }
+        li a { text-decoration: none; color: #0056b3; font-weight: bold; }
+        li a:hover { text-decoration: underline; }
+        .post-meta { font-size: 0.8em; color: #666; margin-top: 0.5em; }
+        .back-link { display: block; margin-top: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><a href="/" style="color: white; text-decoration: none;">My Django Blog</a></h1>
+        <nav>
+            <a href="{% url 'post_list' %}">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            {# Add login/logout/registration links later #}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}
+        {# Content from specific templates will be injected here #}
+        {% endblock content %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 My Django Blog</p>
+    </footer>
+
+    <script src="{% static 'blog/script.js' %}"></script>
+</body>
+</html>

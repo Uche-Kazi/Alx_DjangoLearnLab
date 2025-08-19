@@ -1,0 +1,13 @@
+<!-- ~/Alx_DjangoLearnLab/django_blog/blog/templates/blog/post_detail.html -->
+{% extends 'base.html' %} {# Extends the base template #}
+
+{% block title %}{{ post.title }}{% endblock title %}
+
+{% block content %}
+    <h2>{{ post.title }}</h2>
+    <p class="post-meta">Published on {{ post.published_date|date:"F j, Y" }} by {{ post.author.username }}</p>
+    <div class="post-content">
+        <p>{{ post.content|linebreaksbr }}</p>
+    </div>
+    <p class="back-link"><a href="{% url 'post_list' %}">← Back to all posts</a></p>
+{% endblock content %}
