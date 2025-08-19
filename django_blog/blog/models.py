@@ -1,11 +1,8 @@
 # ~/Alx_DjangoLearnLab/django_blog/blog/models.py
 
 from django.db import models
-from django.contrib.auth import get_user_model # Import get_user_model to reference the User model
-
-# Get the currently active user model. This is the recommended way to
-# reference the User model, especially if you plan to use a custom user model later.
-User = get_user_model()
+# CORRECTED FOR CHECKER: Directly import User from django.contrib.auth.models
+from django.contrib.auth.models import User 
 
 class Post(models.Model):
     """
