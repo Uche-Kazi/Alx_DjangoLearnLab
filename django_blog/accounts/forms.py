@@ -1,11 +1,9 @@
 # ~/Alx_DjangoLearnLab/django_blog/accounts/forms.py
 
 from django import forms
-# Import UserCreationForm and get_user_model from Django's authentication system
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm # Import UserChangeForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 
-# Get your CustomUser model
 CustomUser = get_user_model()
 
 class CustomUserCreationForm(UserCreationForm):
@@ -14,21 +12,22 @@ class CustomUserCreationForm(UserCreationForm):
     It extends Django's built-in UserCreationForm to work with our CustomUser model.
     """
     class Meta(UserCreationForm.Meta):
-        # Specify the custom user model this form is for
         model = CustomUser
-        # Define the fields that will appear on the registration form.
-        # Ensure 'email' and 'username' are included as per your CustomUser definition.
         fields = ('email', 'username',) # 'password' and 'password2' are handled by UserCreationForm implicitly
 
-class CustomUserChangeForm(UserChangeForm):
-    """
-    A form for updating existing users.
-    It extends Django's built-in UserChangeForm and works with our CustomUser model.
-    """
-    class Meta:
-        model = CustomUser
-        # Define the fields that will appear on the profile edit form.
-        # Include custom fields like 'date_of_birth' and 'profile_photo'.
-        # We also need to include 'username' and 'email'.
-        fields = ('email', 'username', 'date_of_birth', 'profile_photo',)
-
+    def __init__(self, *args, **kwargs):
+        """
+        Constructor to add Tailwind CSS classes to form widgets.
+        """
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            # Add common Tailwind classes for input fields
+            field.widget.attrs.update({
+                'class': 'appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-blue-500 rounded-md',
+                'placeholder': field.label # Use label as placeholder
+            })
+            # Specifically handle password fields for better UI
+            if field_name in ['password', 'password2']: # UserCreationForm fields
+                field.widget.attrs['placeholder'] = '********'
+            if field_name == 'email':
+                field.widget.attrs['type'] = 'email' # Ensure email input type

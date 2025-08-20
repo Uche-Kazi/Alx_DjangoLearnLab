@@ -20,7 +20,7 @@
                 <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
                     {{ field.label }}
                 </label>
-                {{ field }}
+                {{ field }} {# This field will now have Tailwind classes from the form's __init__ #}
                 {% if field.help_text %}
                     <p class="text-gray-600 text-xs mt-1">{{ field.help_text }}</p>
                 {% endif %}

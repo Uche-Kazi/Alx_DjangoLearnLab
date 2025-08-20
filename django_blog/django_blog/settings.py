@@ -118,7 +118,6 @@ STATIC_URL = 'static/'
 # Add these lines for static files
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'), # Project-wide static files
-    os.path.join(BASE_DIR, 'blog', 'static'), # Ensure blog app's static files are found
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Directory where static files will be collected

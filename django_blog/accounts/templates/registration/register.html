@@ -13,7 +13,7 @@
                 <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
                     {{ field.label }}
                 </label>
-                {{ field }}
+                {{ field }} {# This field will now have Tailwind classes from the form's __init__ #}
                 {% if field.help_text %}
                     <p class="text-gray-600 text-xs mt-1">{{ field.help_text }}</p>
                 {% endif %}
@@ -31,7 +31,7 @@
             </div>
         {% endif %}
 
-        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">
+        <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">
             Register
         </button>
     </form>
