@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts', # Added for new accounts app
     'blog', # Added to register the blog app
 ]
 
@@ -126,3 +127,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Directory where static fil
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model Configuration
+# Tells Django to use CustomUser model for authentication.
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# Authentication URLs for Django's built-in views
+# URL to redirect to after a user has successfully logged in.
+LOGIN_REDIRECT_URL = '/' # Redirect to the blog homepage after login
+# URL to redirect to when a user needs to log in (e.g., trying to access a protected page).
+LOGIN_URL = 'accounts/login/' # Points to the login URL we'll define

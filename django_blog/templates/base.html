@@ -8,6 +8,7 @@
     <title>{% block title %}Django Blog{% endblock title %}</title>
     <link rel="stylesheet" href="{% static 'blog/style.css' %}">
     <style>
+        /* Keep your existing inline styles here */
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
         header { background-color: #333; color: white; padding: 1em 0; text-align: center; }
         nav { display: flex; justify-content: center; background-color: #444; padding: 0.5em 0; }
@@ -22,16 +23,58 @@
         li a:hover { text-decoration: underline; }
         .post-meta { font-size: 0.8em; color: #666; margin-top: 0.5em; }
         .back-link { display: block; margin-top: 20px; text-align: center; }
+        /* Add some basic styling for form fields to make them look decent */
+        form input[type="email"],
+        form input[type="text"],
+        form input[type="password"],
+        form input[type="file"], /* Added file input styling */
+        form input[type="date"], /* Added date input styling */
+        form textarea { /* Added textarea for content field */
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            margin-top: 0.25rem;
+            margin-bottom: 0.75rem;
+        }
+        form button[type="submit"] {
+            cursor: pointer;
+        }
+        /* Styling for profile image placeholder */
+        .w-32 { width: 8rem; /* 128px */ }
+        .h-32 { height: 8rem; /* 128px */ }
+        .rounded-full { border-radius: 9999px; } /* Makes it a perfect circle */
+        .object-cover { object-fit: cover; } /* Ensures image covers the area without distortion */
+        .border-4 { border-width: 4px; }
+        .border-blue-300 { border-color: #93c5fd; } /* Tailwind blue-300 */
+        .border-gray-300 { border-color: #d1d5db; } /* Tailwind gray-300 */
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .text-6xl { font-size: 4rem; } /* 64px */
     </style>
 </head>
 <body>
     <header>
-        <h1><a href="/" style="color: white; text-decoration: none;">My Django Blog</a></h1>
+        <h1><a href="{% url 'post_list' %}" style="color: white; text-decoration: none;">My Django Blog</a></h1>
         <nav>
             <a href="{% url 'post_list' %}">Home</a>
             <a href="#">About</a>
             <a href="#">Contact</a>
-            {# Add login/logout/registration links later #}
+            {% if user.is_authenticated %}
+                <span style="color: white; padding: 0.5em 1em;">Welcome, {{ user.username|default:user.email }}!</span>
+                <a href="{% url 'profile' %}" class="text-blue-200 hover:text-white">Profile</a> {# New link for user profile #}
+                <a href="{% url 'post_create' %}" class="text-blue-200 hover:text-white">Create New Post</a> {# Link for creating posts #}
+                {# Modified Logout link to a form for POST request #}
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: white; cursor: pointer; padding: 0.5em 1em; text-decoration: none; font-size: 1em;">Log Out</button>
+                </form>
+            {% else %}
+                <a href="{% url 'register' %}">Register</a>
+                <a href="{% url 'login' %}">Log In</a>
+            {% endif %}
         </nav>
     </header>
 

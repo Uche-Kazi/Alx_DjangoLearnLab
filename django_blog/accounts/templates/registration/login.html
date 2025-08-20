@@ -1,0 +1,41 @@
+<!-- ~/Alx_DjangoLearnLab/django_blog/accounts/templates/registration/login.html -->
+{% extends 'base.html' %} {# Extends the base template #}
+
+{% block title %}Log In{% endblock title %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Log In to Your Account</h2>
+    <form method="post" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
+        {% csrf_token %} {# Required for Django forms #}
+        {% if form.non_field_errors %}
+            <div class="mb-4 text-red-500 text-sm">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <p class="text-gray-600 text-xs mt-1">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out">
+            Log In
+        </button>
+    </form>
+    <p class="text-center text-gray-600 text-sm mt-4">
+        Don't have an account? <a href="{% url 'register' %}" class="text-blue-500 hover:text-blue-800">Register Here</a>
+    </p>
+    {# Add a password reset link later if needed #}
+{% endblock content %}

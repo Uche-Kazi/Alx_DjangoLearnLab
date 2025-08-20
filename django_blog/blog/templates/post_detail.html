@@ -4,10 +4,19 @@
 {% block title %}{{ post.title }}{% endblock title %}
 
 {% block content %}
-    <h2>{{ post.title }}</h2>
-    <p class="post-meta">Published on {{ post.published_date|date:"F j, Y" }} by {{ post.author.username }}</p>
-    <div class="post-content">
-        <p>{{ post.content|linebreaksbr }}</p>
+    <div class="post-detail-container">
+        <h2 class="text-3xl font-bold mb-4 text-blue-800">{{ post.title }}</h2>
+        <p class="post-meta text-gray-600 mb-4">
+            By {{ post.author.username|default:post.author.email }} on {{ post.published_date|date:"F d, Y" }}
+        </p>
+        <div class="post-content text-gray-800 leading-relaxed">
+            <p>{{ post.content|linebreaksbr }}</p> {# Displays content with line breaks #}
+        </div>
+        <div class="text-center mt-8">
+            <a href="{% url 'post_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+                Back to Posts
+            </a>
+            {# Add Edit/Delete links later, conditional on user being author #}
+        </div>
     </div>
-    <p class="back-link"><a href="{% url 'post_list' %}">← Back to all posts</a></p>
 {% endblock content %}
