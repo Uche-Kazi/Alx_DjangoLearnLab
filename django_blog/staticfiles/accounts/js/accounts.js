@@ -1,0 +1,1 @@
+// accounts.js: Custom JavaScript for the accounts app
