@@ -1,14 +1,9 @@
 # ~/Alx_DjangoLearnLab/django_blog/blog/urls.py
 
 from django.urls import path
-from . import views
+from . import views # Import views from the current app
 
 urlpatterns = [
-    path('', views.post_list, name='post_list'),
-    path('post/<int:pk>/', views.post_detail, name='post_detail'),
-    path('post/new/', views.post_create, name='post_create'),
-    path('post/<int:pk>/edit/', views.post_edit, name='post_edit'),
-    path('post/<int:pk>/delete/', views.post_delete, name='post_delete'),
-    # New URL pattern for publishing a post
-    path('post/<int:pk>/publish/', views.post_publish, name='post_publish'),
+    path('', views.home_page_view, name='home'), # Example: a homepage view
+    # Add other blog-related URLs here (e.g., post detail, new post, etc.)
 ]

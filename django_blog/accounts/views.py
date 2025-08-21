@@ -1,38 +1,46 @@
 # ~/Alx_DjangoLearnLab/django_blog/accounts/views.py
 
 from django.shortcuts import render, redirect
-from django.contrib.auth import login # Import login to automatically log in the user after registration
-from django.contrib.auth.decorators import login_required # Import login_required decorator
-from .forms import CustomUserCreationForm
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+# from django.contrib.auth import views as auth_views # No longer needed here for LoginView/LogoutView
+from .forms import UserRegisterForm
 
-def register_view(request):
+def signup(request):
     """
-    View for user registration.
-    Handles both displaying the registration form (GET) and processing form submission (POST).
+    Handles user registration.
+    If the request method is POST, it processes the form submission.
+    If the form is valid, it saves the user, displays a success message,
+    and redirects to the login page.
+    Otherwise, it displays the empty registration form.
     """
     if request.method == 'POST':
-        # If the request is POST, it means the form was submitted.
-        # Populate the form with data from the request.
-        form = CustomUserCreationForm(request.POST)
+        form = UserRegisterForm(request.POST)
         if form.is_valid():
-            # If the form data is valid, save the new user.
-            user = form.save()
-            # Log the user in immediately after successful registration.
-            login(request, user)
-            # Redirect to a success page or the home page.
-            return redirect('post_list') # Assuming 'post_list' is your blog homepage URL name
+            form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}! You can now log in.')
+            return redirect('login') # Redirect to the login page after successful registration
     else:
-        # If the request is GET, display a blank registration form.
-        form = CustomUserCreationForm()
-    
-    # Render the registration template, passing the form context.
-    return render(request, 'registration/register.html', {'form': form})
+        form = UserRegisterForm()
+    return render(request, 'accounts/signup.html', {'form': form})
 
-@login_required # Ensures only logged-in users can access this view
-def profile_view(request):
+@login_required # This decorator ensures only logged-in users can access this view
+def profile(request):
     """
-    View for displaying the user's profile.
-    This is a placeholder and will show a simple message for now.
+    Renders the user profile page.
+    This view requires the user to be authenticated.
     """
-    return render(request, 'accounts/profile.html', {'user': request.user})
+    return render(request, 'accounts/profile.html')
 
+# Django's built-in Login View and Logout View are now handled directly in urls.py
+# So, we remove:
+# user_login = auth_views.LoginView.as_view(template_name='accounts/login.html')
+# user_logout = auth_views.LogoutView.as_view(next_page='logged_out')
+
+def logged_out(request):
+    """
+    Renders a simple page indicating the user has been logged out.
+    """
+    messages.info(request, "You have been logged out.")
+    return render(request, 'accounts/logged_out.html')

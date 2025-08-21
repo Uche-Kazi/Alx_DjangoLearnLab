@@ -1,23 +1,21 @@
 # ~/Alx_DjangoLearnLab/django_blog/django_blog/settings.py
 
-import os # Ensure os is imported at the top
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l^xtu%&kzfgt%oc6tbyu41bw1rn4%aoi$ah+(uwrgm0_xjog0u'
+SECRET_KEY = 'django-insecure-m#x7^13$e)u%k5o(u#c7!t#9v1!+k71-z%t!s-!2x2z&t%j!f' # Ensure your actual secret key is here
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True # This must be True for development
 
-ALLOWED_HOSTS = []
-
+# Add your domain names or IP addresses here for production.
+# For local development, '127.0.0.1' and 'localhost' are usually sufficient.
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] # <-- ADD THIS LINE or uncomment and populate it
 
 # Application definition
 
@@ -28,10 +26,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts', # Added for new accounts app
-    'blog', # Added to register the blog app
+    # My apps
+    'accounts.apps.AccountsConfig', # Your accounts app
+    'blog.apps.BlogConfig',     # Your blog app
+    # Cripsy Forms apps
+    'crispy_forms', # Added for using Tailwind with crispy forms
+    'crispy_tailwind',
 ]
 
+# Correct MIDDLEWARE configuration
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -44,14 +47,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_blog.urls'
 
+# Correct TEMPLATES configuration
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], # Add this line for project-level templates
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.debug', # Include debug processor
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -62,26 +66,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_blog.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-        # ADD THESE LINES TO SATISFY THE CHECKER'S REQUIREMENTS
-        'USER': '',         # Placeholder user, not used by SQLite
-        'PASSWORD': '',     # Placeholder password, not used by SQLite
-        'HOST': '',         # Placeholder host, not used by SQLite
-        'PORT': '',         # Placeholder port, not used by SQLite
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -97,42 +90,33 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
+# Crispy Forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+# Static files
 STATIC_URL = 'static/'
-
-# Add these lines for static files
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'), # Project-wide static files
+    os.path.join(BASE_DIR, 'static'),
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Directory where static files will be collected
+# Media files settings (for profile pictures)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model Configuration
-# Tells Django to use CustomUser model for authentication.
-AUTH_USER_MODEL = 'accounts.CustomUser'
+# ADD THESE AUTHENTICATION REDIRECT URLs
+LOGIN_REDIRECT_URL = 'profile'       # Redirect to user's profile after successful login
+LOGOUT_REDIRECT_URL = 'logged_out'   # Redirect to logged out page after successful logout
+LOGIN_URL = 'login'                  # URL for the login page, used by @login_required decorator
 
-# Authentication URLs for Django's built-in views
-# URL to redirect to after a user has successfully logged in.
-LOGIN_REDIRECT_URL = '/' # Redirect to the blog homepage after login
-# URL to redirect to when a user needs to log in (e.g., trying to access a protected page).
-LOGIN_URL = 'accounts/login/' # Points to the login URL we'll define
+AUTH_USER_MODEL = 'accounts.CustomUser'
