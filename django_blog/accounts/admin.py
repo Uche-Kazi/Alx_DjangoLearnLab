@@ -2,20 +2,35 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, Profile
 
-@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    # Ensure your add_fieldsets and fieldsets are correctly defined without duplicates
-    # and include 'bio' if you want it editable.
-    # ... (your add_fieldsets and fieldsets here, as discussed in previous steps) ...
+    """
+    Custom Admin interface for CustomUser model.
+    Inherits from Django's UserAdmin.
+    """
+    # Define the fields to be displayed in the list view of the admin
+    list_display = (
+        'username',
+        'email',
+        'first_name',
+        'last_name',
+        'is_staff',
+        # Removed 'bio' from here, as it's no longer in the CustomUser model
+    )
 
-    # This is the critical part for the current error:
-    list_display = UserAdmin.list_display + ('bio',) # <--- Ensure 'bio' is exactly here
-    # You could also explicitly list all fields:
-    # list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'bio')
-    # Make sure 'bio' is spelled correctly and matches the field name in models.py
+    # Define the fields to be used when adding a new user
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        # Add any custom fields here for the add user form if needed
+        # (None, {'fields': ('bio',)}), # Example: if 'bio' were still in CustomUser
+    )
 
-    # Any other admin configurations...
-    search_fields = ('username', 'email', 'bio',)
-    ordering = ('username',)
+    # Define the fields to be used when changing an existing user
+    fieldsets = UserAdmin.fieldsets + (
+        # Add any custom fields here for the change user form if needed
+        # (None, {'fields': ('bio',)}), # Example: if 'bio' were still in CustomUser
+    )
+
+# Register your models with the admin site
+admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Profile) # Register the Profile model
