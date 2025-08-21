@@ -2,6 +2,8 @@
 
 from django.shortcuts import render
 
-# A simple placeholder view for the homepage
 def home_page_view(request):
+    """
+    Simple placeholder view for the blog homepage.
+    """
     return render(request, 'blog/home.html', {})

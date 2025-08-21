@@ -2,55 +2,63 @@
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from django.contrib.auth.models import User
-# Import your custom user model
-from .models import CustomUser
+from django.contrib.auth import get_user_model # Use get_user_model to get the active user model
 
-# Define a custom user registration form
-# This form extends Django's built-in UserCreationForm
-class UserRegisterForm(UserCreationForm):
-    # Add an email field, making it required
-    # Django's UserCreationForm only includes username and password by default
+# Get the CustomUser model defined in accounts/models.py
+CustomUser = get_user_model()
+
+# This form is for user registration (used by register_view)
+class RegisterForm(UserCreationForm):
+    # Adding email as a required field for registration
     email = forms.EmailField(required=True,
                              widget=forms.EmailInput(attrs={'class': 'border p-2 rounded-lg w-full'}))
 
     class Meta(UserCreationForm.Meta):
-        # Specify the model the form is for
-        model = User
-        # List the fields to be included in the form
-        # 'email' is added here to ensure it's rendered by the form
+        model = CustomUser # Ensure this uses CustomUser
         fields = UserCreationForm.Meta.fields + ('email',)
 
     def clean_email(self):
-        """
-        Custom validation for the email field.
-        Ensures that the email provided is not already registered.
-        """
         email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
+        # Check if email already exists, excluding the current user's email if it's an update scenario
+        if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already registered.")
         return email
 
-# Define a custom user change form for use in the admin
-# This form extends Django's built-in UserChangeForm
-class CustomUserChangeForm(UserChangeForm):
+# This form is for updating the User model's fields (username, email, etc.)
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField(required=True,
+                             widget=forms.EmailInput(attrs={'class': 'border p-2 rounded-lg w-full'}))
+    username = forms.CharField(max_length=150, required=True,
+                               widget=forms.TextInput(attrs={'class': 'border p-2 rounded-lg w-full'}))
+
     class Meta:
-        # Specify the custom user model this form is for
         model = CustomUser
-        # List all the fields from your CustomUser model that you want to be editable in the admin
-        # Importantly, ensure 'password' is NOT included here as UserChangeForm handles it separately
-        # and including it here can cause issues with the admin password change functionality.
-        fields = ('email', 'username', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+        fields = ['username', 'email'] # Fields that users can update about themselves
 
-    # If you need to include a 'password' field, you'd typically override __init__ or use
-    # a separate form for password changes. For simplicity, we generally let the
-    # default UserChangeForm's handling of password fields (which uses separate widgets)
-    # work or omit it if you just want to edit other profile details.
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ensure password related fields are handled correctly by the base UserChangeForm
-        # or remove them if not desired for this specific profile update form.
-        # Example: if you only want to edit email/username and not password, you might do:
-        # if 'password' in self.fields:
-        #    del self.fields['password']
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # Ensure email is unique, excluding the current user's email if it's an update
+        if CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This email is already registered by another user.")
+        return email
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        # Ensure username is unique, excluding the current user's username if it's an update
+        if CustomUser.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+# This form is for updating additional profile-specific fields (like bio, image, etc.)
+# You need to define a Profile model in accounts/models.py if you haven't already.
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        # Assuming you have a Profile model linked to CustomUser
+        # You'll need to define it in accounts/models.py
+        model = CustomUser # For now, we'll use CustomUser directly for simplicity if no separate Profile model is created.
+        # If you have a separate Profile model, change `model = CustomUser` to `model = Profile`
+        # and ensure Profile has fields like 'bio', 'image', 'location'
+        # e.g., model = Profile
+        fields = ['first_name', 'last_name'] # Using fields directly from CustomUser for demonstration
+                                            # If you have a separate Profile model, these would be its fields.
+                                            # e.g., fields = ['bio', 'image', 'location']
