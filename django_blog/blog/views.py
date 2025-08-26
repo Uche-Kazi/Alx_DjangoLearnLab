@@ -12,6 +12,7 @@ from django.views.generic import ( # Import generic class-based views
 )
 from .models import Post, Comment # Import the Post and Comment models from the current app (blog/models.py)
 from django.utils import timezone # Import timezone for potential date handling (e.g., setting published_date automatically)
+from django.contrib.auth.decorators import login_required
 
 # Class-based view for listing all blog posts
 class PostListView(ListView):
