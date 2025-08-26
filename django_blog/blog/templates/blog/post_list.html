@@ -1,57 +1,47 @@
-<!-- ~/Alx_DjangoLearnLab/django_blog/blog/templates/blog/post_list.html -->
-{% extends 'base.html' %} {# Extends the base template #}
+{# ~/Alx_DjangoLearnLab/django_blog/blog/templates/blog/post_list.html #}
+{% extends 'blog/base.html' %} {# This template extends the base.html layout #}
 
-{% block title %}My Django Blog{% endblock title %}
+{% block title %}Blog Posts{% endblock %} {# Sets the browser tab title #}
+{% block header_title %}All Blog Posts{% endblock %} {# Sets the main page header #}
 
 {% block content %}
-    <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">Latest Blog Posts</h1>
-
-    {% if user.is_authenticated and user_drafts %} {# Check if user is logged in AND has drafts #}
-        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Your Drafts</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {% for post in user_drafts %}
-                <div class="bg-white p-6 rounded-lg shadow-md border-2 border-dashed border-gray-300">
-                    <h3 class="text-xl font-semibold text-purple-700 mb-2">
-                        <a href="{% url 'post_detail' pk=post.pk %}" class="hover:underline">{{ post.title }}</a>
-                        <span class="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">DRAFT</span>
-                    </h3>
-                    <p class="text-gray-600 text-sm mb-4">By {{ post.author.username|default:post.author.email }}</p>
-                    <p class="text-gray-700">{{ post.content|truncatechars:100 }}</p>
-                    <div class="mt-4 text-right">
-                        <a href="{% url 'post_detail' pk=post.pk %}" class="text-blue-500 hover:underline">Read More &rarr;</a>
-                    </div>
+<div class="space-y-6">
+    {% if post_list %} {# Check if there are any posts to display #}
+        {% for post in post_list %} {# Loop through each post in the post_list context variable #}
+            <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow duration-300 ease-in-out">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">
+                    {# Link to the detailed view of each post #}
+                    <a href="{% url 'blog:post_detail' pk=post.pk %}" class="hover:text-indigo-600 transition-colors duration-200">
+                        {{ post.title }}
+                    </a>
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    Published on {{ post.published_date|date:"F d, Y" }} by {{ post.author.username }}
+                </p>
+                <div class="prose max-w-none text-gray-800 mb-4">
+                    {# Display a truncated version of the content, or the full content if short #}
+                    {{ post.content|truncatechars:200|safe }} {# 'safe' is important if content might contain HTML #}
                 </div>
-            {% empty %}
-                {# This block runs if user_drafts is empty but user is authenticated #}
-            {% endfor %}
-        </div>
-        {% if posts %} {# Only show separator if there are also published posts #}
-            <hr class="my-10 border-gray-300"> {# Separator between drafts and published posts #}
-            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Published Posts</h2>
-        {% endif %}
-    {% endif %}
-
-    {% if posts %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for post in posts %}
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h3 class="text-xl font-semibold text-blue-700 mb-2">
-                        <a href="{% url 'post_detail' pk=post.pk %}" class="hover:underline">{{ post.title }}</a>
-                    </h3>
-                    <p class="text-gray-600 text-sm mb-4">
-                        By {{ post.author.username|default:post.author.email }} on {{ post.published_date|date:"F d, Y" }}
-                    </p>
-                    <p class="text-gray-700">{{ post.content|truncatechars:150 }}</p>
-                    <div class="mt-4 text-right">
-                        <a href="{% url 'post_detail' pk=post.pk %}" class="text-blue-500 hover:underline">Read More &rarr;</a>
-                    </div>
+                <div class="flex items-center justify-between text-sm text-gray-500">
+                    <a href="{% url 'blog:post_detail' pk=post.pk %}" class="text-indigo-600 hover:text-indigo-800 font-medium">Read More &rarr;</a>
+                    {% if user.is_authenticated and user.id == post.author.id %} {# Check if the current user is the author #}
+                        <div class="space-x-2">
+                            <a href="{% url 'blog:post_edit' pk=post.pk %}" class="text-blue-500 hover:text-blue-700">Edit</a>
+                            <a href="{% url 'blog:post_delete' pk=post.pk %}" class="text-red-500 hover:text-red-700">Delete</a>
+                        </div>
+                    {% endif %}
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     {% else %}
-        {% if not user.is_authenticated or not user_drafts %} {# Only show if no posts and no drafts for user #}
-            <p class="text-center text-gray-600 text-lg">No posts yet. Why not create one?</p>
+        <p class="text-gray-600 text-center py-8">No blog posts found. Why not create one?</p>
+        {% if user.is_authenticated %}
+            <div class="text-center">
+                <a href="{% url 'blog:post_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create New Post
+                </a>
+            </div>
         {% endif %}
     {% endif %}
-
+</div>
 {% endblock content %}

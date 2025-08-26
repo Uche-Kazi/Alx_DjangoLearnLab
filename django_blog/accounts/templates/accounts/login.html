@@ -1,8 +1,5 @@
-{# ~/Alx_DjangoLearnLab/django_blog/accounts/templates/accounts/login.html #}
-{% extends "blog/base.html" %}
+{% extends 'blog/base.html' %}
 {% load crispy_forms_tags %}
-
-{% block title %}Login{% endblock title %}
 
 {% block content %}
     <div class="container mx-auto p-4 flex justify-center items-center min-h-screen">
@@ -14,7 +11,7 @@
                 <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300 ease-in-out">Login</button>
             </form>
             <div class="text-center mt-4">
-                <small class="text-gray-600">Don't have an account? <a class="text-blue-500 hover:underline" href="{% url 'signup' %}">Sign Up</a></small>
+                <small class="text-gray-600">Don't have an account? <a class="text-blue-500 hover:underline" href="{% url 'accounts:signup' %}">Sign Up</a></small> {# Corrected line #}
             </div>
         </div>
     </div>

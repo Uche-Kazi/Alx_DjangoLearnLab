@@ -1,58 +1,100 @@
 # ~/Alx_DjangoLearnLab/django_blog/blog/views.py
 
-from django.shortcuts import render, redirect
-from django.contrib import messages # Needed for messages framework
-from django.contrib.auth.decorators import login_required # Needed for @login_required
+from django.shortcuts import render, get_object_or_404 # render for templates, get_object_or_404 for fetching objects
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin # Mixins for access control in class-based views
+from django.contrib.auth.models import User # Import Django's built-in User model
+from django.views.generic import ( # Import generic class-based views
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView
+)
+from .models import Post, Comment # Import the Post and Comment models from the current app (blog/models.py)
+from django.utils import timezone # Import timezone for potential date handling (e.g., setting published_date automatically)
 
-# Import forms and models from accounts app
-# Adjust these imports based on your actual forms and models
-from accounts.forms import UserUpdateForm, ProfileUpdateForm
-from accounts.models import CustomUser # Or just Profile if ProfileUpdateForm works with it
+# Class-based view for listing all blog posts
+class PostListView(ListView):
+    model = Post # Specify the model this view will operate on
+    template_name = 'blog/home.html' # <app>/<model>_<viewtype>.html (e.g., blog/post_list.html is default)
+    context_object_name = 'posts' # The variable name used in the template to access the list of posts
+    ordering = ['-published_date'] # Order posts by published_date in descending order (most recent first)
+    paginate_by = 5 # Display 5 posts per page
 
-def home_page_view(request):
-    """
-    Simple placeholder view for the blog homepage.
-    """
-    return render(request, 'blog/home.html', {})
+# Class-based view for listing posts by a specific user
+class UserPostListView(ListView):
+    model = Post
+    template_name = 'blog/user_posts.html' # Template to render
+    context_object_name = 'posts'
+    paginate_by = 5
 
-@login_required
-def profile_edit_view(request):
-    """
-    Allows authenticated users to view and edit their profile details.
-    Handles GET (display form) and POST (update user information) requests.
-    """
-    # Ensure a Profile object exists for the user.
-    # This assumes you have a Profile model with a OneToOneField to CustomUser.
-    # If you don't have a separate Profile model, adjust this logic.
-    if not hasattr(request.user, 'profile'):
-        from accounts.models import Profile # Local import to avoid circular dependency
-        Profile.objects.create(user=request.user)
+    # Override get_queryset to filter posts by a specific user
+    def get_queryset(self):
+        # Get the User object based on the username captured in the URL
+        # get_object_or_404 raises a 404 error if the user doesn't exist
+        user = get_object_or_404(User, username=self.kwargs.get('username'))
+        # Return posts authored by this user, ordered by most recent first
+        # IMPORTANT: Ensure 'published_date' matches the field name in your Post model
+        return Post.objects.filter(author=user).order_by('-published_date')
 
-    if request.method == 'POST':
-        # Instantiate forms with POST data and current user/profile instance
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST,
-                                         request.FILES, # For profile pictures
-                                         instance=request.user.profile) # Pass instance of profile
+# Class-based view for displaying a single blog post in detail
+class PostDetailView(DetailView):
+    model = Post # Specify the model this view will operate on
+    # Default template name would be blog/post_detail.html
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, 'Your profile has been updated successfully!')
-            return redirect('profile') # Redirect back to the profile page (name 'profile' in blog/urls.py)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        # Instantiate forms with current user/profile data for GET request
-        user_form = UserUpdateForm(instance=request.user)
-        if hasattr(request.user, 'profile'):
-            profile_form = ProfileUpdateForm(instance=request.user.profile)
-        else:
-            # Should not happen if previous check creates it, but as fallback
-            profile_form = ProfileUpdateForm()
+# Class-based view for creating a new blog post
+# LoginRequiredMixin ensures that only logged-in users can create posts
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post # Specify the model for which a new instance will be created
+    fields = ['title', 'content', 'published_date'] # Fields from the Post model to include in the form
+    template_name = 'blog/post_form.html' # Explicitly set template name
+    # Default template name would be blog/post_form.html
 
-    context = {
-        'user_form': user_form,
-        'profile_form': profile_form
-    }
-    return render(request, 'accounts/profile_edit.html', context) # Assuming you have this template
+    # Override form_valid method to assign the current logged-in user as the author
+    def form_valid(self, form):
+        form.instance.author = self.request.user # Set the author of the post to the current user
+        # You could uncomment the line below if you want to automatically set published_date on creation
+        # form.instance.published_date = timezone.now()
+        return super().form_valid(form) # Call the parent class's form_valid to save the form
+
+
+# Class-based view for updating an existing blog post
+# LoginRequiredMixin ensures only logged-in users can update posts
+# UserPassesTestMixin ensures only the author can update their own posts
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    fields = ['title', 'content', 'published_date'] # Include published_date for updating
+    template_name = 'blog/post_form.html' # Explicitly set template name
+    # Default template name would be blog/post_form.html
+
+    # Override form_valid method (similar to CreateView)
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    # test_func method for UserPassesTestMixin: checks if the current user is the author of the post
+    def test_func(self):
+        post = self.get_object() # Get the post object being updated
+        if self.request.user == post.author: # Check if the current user is the author
+            return True
+        return False # If not, deny access
+
+# Class-based view for deleting a blog post
+# LoginRequiredMixin ensures only logged-in users can delete posts
+# UserPassesTestMixin ensures only the author can delete their own posts
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    success_url = '/' # Redirect to the home page after successful deletion
+    template_name = 'blog/post_confirm_delete.html' # Default template name (ensure this template exists)
+
+    # test_func method for UserPassesTestMixin: checks if the current user is the author of the post
+    def test_func(self):
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+
+# Function-based view for the about page
+def about(request):
+    return render(request, 'blog/about.html', {'title': 'About'})
+
