@@ -3,18 +3,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
-from django.contrib import messages # For displaying success/error messages
-from django.contrib.auth.models import User # <--- Ensure this import is present
-from django.core.mail import send_mail # <--- ADD THIS IMPORT
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin # Import Mixins
 
-# Assuming your Post and Comment models are in .models
 from .models import Post, Comment
-# Assuming your CommentForm is in .forms
 from .forms import EmailPostForm, CommentForm
 
-# --- Helper function for comment author check ---
+# --- Helper function for comment author check (Still useful for function-based views if any remain) ---
 def is_comment_author(user, comment):
     """
     Checks if the given user is the author of the comment.
@@ -28,119 +27,102 @@ class PostListView(ListView):
     paginate_by = 3
     template_name = 'blog/post/list.html'
 
-# --- New User-Specific Post List View ---
+# --- User-Specific Post List View ---
 class UserPostListView(ListView):
     model = Post
-    template_name = 'blog/post/list.html' # Reuse the same list template
+    template_name = 'blog/post/list.html'
     context_object_name = 'posts'
     paginate_by = 3
 
     def get_queryset(self):
-        # Get the username from the URL kwargs
         username = self.kwargs.get('username')
         user = get_object_or_404(User, username=username)
         return Post.published.filter(author=user).order_by('-publish')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add the user whose posts are being displayed to the context
         context['page_user'] = get_object_or_404(User, username=self.kwargs.get('username'))
         return context
 
-# --- Modified Post Detail View to include comments ---
-def post_detail(request, year, month, day, post):
-    """
-    Displays a single blog post and handles comment submission.
-    """
+# --- Post Detail View (Modified to handle comments indirectly) ---
+def post_detail(request, year, month, day, post_slug): # Renamed 'post' to 'post_slug' for clarity
     post = get_object_or_404(Post,
                              status=Post.Status.PUBLISHED,
                              publish__year=year,
                              publish__month=month,
                              publish__day=day,
-                             slug=post)
+                             slug=post_slug)
 
-    # List of active comments for this post
     comments = post.comments.filter(active=True)
-    
-    new_comment = None # Initialize new_comment to None
-
-    if request.method == 'POST':
-        comment_form = CommentForm(data=request.POST)
-        if comment_form.is_valid():
-            new_comment = comment_form.save(commit=False)
-            new_comment.post = post
-            if request.user.is_authenticated:
-                new_comment.author = request.user
-                new_comment.save()
-                messages.success(request, 'Your comment has been posted successfully.')
-                return redirect(post.get_absolute_url() + '#comment-' + str(new_comment.pk))
-            else:
-                messages.error(request, 'You must be logged in to post a comment.')
-                return redirect('login')
-    else:
-        comment_form = CommentForm()
+    # The comment form will now be handled by CommentCreateView.
+    # We still need to pass a blank form for display if the user is authenticated.
+    comment_form = CommentForm()
 
     return render(request,
                   'blog/post/detail.html',
                   {'post': post,
                    'comments': comments,
-                   'comment_form': comment_form,
-                   'new_comment': new_comment})
+                   'comment_form': comment_form, # Pass the blank form for display
+                   })
 
 
-# --- View to edit an existing comment ---
-@login_required
-@user_passes_test(lambda u: u.is_authenticated, login_url=reverse_lazy('login'))
-def edit_comment(request, comment_id):
-    """
-    Allows a user to edit their own comment.
-    """
-    comment = get_object_or_404(Comment, pk=comment_id)
+# --- NEW: Class-Based View for Creating Comments ---
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html' # A generic template for the form
 
-    if not is_comment_author(request.user, comment):
-        messages.error(request, "You are not authorized to edit this comment.")
-        return redirect(comment.post.get_absolute_url())
+    def form_valid(self, form):
+        # Set the author and post before saving
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, pk=post_id)
+        form.instance.author = self.request.user
+        form.instance.post = post
+        messages.success(self.request, 'Your comment has been posted successfully.')
+        return super().form_valid(form)
 
-    if request.method == 'POST':
-        form = CommentForm(instance=comment, data=request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Your comment has been updated successfully.')
-            return redirect(comment.post.get_absolute_url() + '#comment-' + str(comment.pk))
-        else:
-            messages.error(request, 'There was an error updating your comment.')
-    else:
-        form = CommentForm(instance=comment)
-
-    return render(request, 'blog/comment/edit.html', {'form': form, 'comment': comment})
+    def get_success_url(self):
+        # Redirect back to the post detail page
+        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        return post.get_absolute_url() + '#comments-section' # Redirect to comments section
 
 
-# --- View to delete an existing comment ---
-@login_required
-@user_passes_test(lambda u: u.is_authenticated, login_url=reverse_lazy('login'))
-def delete_comment(request, comment_id):
-    """
-    Allows a user to delete their own comment.
-    """
-    comment = get_object_or_404(Comment, pk=comment_id)
+# --- NEW: Class-Based View for Updating Comments ---
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html' # Reuse the generic form template
 
-    if not is_comment_author(request.user, comment):
-        messages.error(request, "You are not authorized to delete this comment.")
-        return redirect(comment.post.get_absolute_url())
+    def test_func(self):
+        # Ensure only the author can update their comment
+        comment = self.get_object()
+        return comment.author == self.request.user
 
-    if request.method == 'POST':
-        comment.delete()
-        messages.success(request, 'Your comment has been deleted successfully.')
-        return redirect(comment.post.get_absolute_url())
-    
-    return render(request, 'blog/comment/delete_confirm.html', {'comment': comment})
+    def get_success_url(self):
+        # Redirect back to the post detail page
+        comment = self.get_object()
+        messages.success(self.request, 'Your comment has been updated successfully.')
+        return comment.post.get_absolute_url() + '#comment-' + str(comment.pk)
 
 
-# --- Post Share View ---
+# --- NEW: Class-Based View for Deleting Comments ---
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/comment_confirm_delete.html' # A generic confirmation template
+
+    def test_func(self):
+        # Ensure only the author can delete their comment
+        comment = self.get_object()
+        return comment.author == self.request.user
+
+    def get_success_url(self):
+        # Redirect back to the post detail page after deletion
+        comment = self.get_object()
+        messages.success(self.request, 'Your comment has been deleted successfully.')
+        return comment.post.get_absolute_url() + '#comments-section' # Redirect to comments section
+
+# --- Post Share View (remains the same) ---
 def post_share(request, post_id):
-    """
-    Allows users to share a blog post via email.
-    """
     post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
     sent = False
 
@@ -152,11 +134,12 @@ def post_share(request, post_id):
             subject = f"{cd['name']} recommends you read {post.title}"
             message = f"Read {post.title} at {post_url}\n\n" \
                       f"{cd['name']}'s comments: {cd['comments']}"
-            send_mail(subject, message, 'your_account@gmail.com', [cd['to']]) # Change 'your_account@gmail.com' to your email
+            send_mail(subject, message, 'your_account@gmail.com', [cd['to']])
             sent = True
         else:
             messages.error(request, 'There was an error sending the email. Please check the form.')
     else:
         form = EmailPostForm()
-    
+
     return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
+

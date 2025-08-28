@@ -1,36 +1,46 @@
 # blog/urls.py
 
 from django.urls import path
-# Import all view functions/classes directly from .views as they are used without 'views.' prefix
+from . import views
 from .views import (
     PostListView,
     post_detail,
     UserPostListView,
     post_share,
-    edit_comment,   # <--- Ensure these are imported directly
-    delete_comment, # <--- Ensure these are imported directly
+    CommentCreateView,  # Import new CBVs
+    CommentUpdateView,  # Import new CBVs
+    CommentDeleteView,  # Import new CBVs
 )
 
-app_name = 'blog' # Define the application namespace
+app_name = 'blog'
 
 urlpatterns = [
     # Post list view
     path('', PostListView.as_view(), name='post_list'),
     path('tag/<slug:tag_slug>/', PostListView.as_view(), name='post_list_by_tag'),
-    path('user/<str:username>/', UserPostListView.as_view(), name='user_posts'), # Using the imported view
+    path('user/<str:username>/', UserPostListView.as_view(), name='user_posts'),
 
-    # Post detail view
-    path('<int:year>/<int:month>/<int:day>/<slug:post>/',
-         post_detail, # <--- Corrected: Using post_detail directly
+    # Post detail view (now handles displaying comments and the create form)
+    path('<int:year>/<int:month>/<int:day>/<slug:post_slug>/',
+         post_detail,
          name='post_detail'),
 
     # Post share view
-    # This pattern links to the post_share view and takes a post_id as an integer.
-    path('<int:post_id>/share/', post_share, name='post_share'), # <--- Corrected: Using post_share directly
+    path('<int:post_id>/share/', post_share, name='post_share'),
 
-    # Comment related URLs
-    path('comment/<int:comment_id>/edit/', edit_comment, name='edit_comment'), # <--- Corrected: Using edit_comment directly
-    path('comment/<int:comment_id>/delete/', delete_comment, name='delete_comment'), # <--- Corrected: Using delete_comment directly
+    # NEW Comment-related URLs using class-based views and nested structure:
+    # URL for creating a new comment on a specific post
+    path('<int:post_id>/comments/new/',
+         CommentCreateView.as_view(),
+         name='comment_create'),
 
-    # Other paths can go here
+    # URL for editing an existing comment
+    path('comments/<int:pk>/edit/',
+         CommentUpdateView.as_view(),
+         name='comment_update'),
+
+    # URL for deleting an existing comment
+    path('comments/<int:pk>/delete/',
+         CommentDeleteView.as_view(),
+         name='comment_delete'),
 ]

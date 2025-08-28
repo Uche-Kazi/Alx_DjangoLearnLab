@@ -50,23 +50,11 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            # This path is for project-wide templates (e.g., templates/404.html).
-            # If you had a 'base.html' directly in BASE_DIR/templates/, this would find it as 'base.html'.
+            # This path is for project-wide templates and can be used for
+            # overriding third-party app templates (e.g., templates/account/login.html)
             os.path.join(BASE_DIR, 'templates'),
-
-            # THIS IS THE CRITICAL CHANGE:
-            # This path now directly points to where your base.html file IS:
-            # C:\Users\DELL\Alx_DjangoLearnLab\django_blog\blog\templates\blog\
-            # It will find 'base.html' when {% extends 'base.html' %} is used.
-            os.path.join(BASE_DIR, 'blog', 'templates', 'blog'),
-
-            # This path is for templates like 'blog/post/list.html' or 'blog/post/detail.html'
-            # when referenced from views.
-            # Example: 'blog/post/list.html' will be found in C:\...\blog\templates\blog\post\list.html
-            os.path.join(BASE_DIR, 'blog', 'templates'), # Still important for app-level structure
-
         ],
-        'APP_DIRS': False, # Set to False because we are explicitly listing all template directories
+        'APP_DIRS': True, # <--- CRITICAL CHANGE: Set to True to find app-specific templates
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
