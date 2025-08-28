@@ -1,76 +1,39 @@
-{# ~/Alx_DjangoLearnLab/django_blog/blog/templates/blog/base.html #}
-{% load static %} {# Required for the 'static' tag #}
+{% load static %}
+{% load blog_tags %} {# <--- ADD THIS LINE #}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Awesome Blog{% endblock title %}</title>
-    {# Link to Tailwind CSS CDN #}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    {# Link your additional CSS file, if you have one #}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    {# Assuming you have both main.css and styles.css as discussed #}
-
-    <!-- Add any other head elements like favicon, meta descriptions here -->
+    <title>{% block title %}{% endblock %}</title>
+    <link href="{% static 'css/blog.css' %}" rel="stylesheet">
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
-    <!-- Navigation Bar -->
-    <nav class="bg-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            {# FIXED: Added 'blog:' namespace to the blog-home URL #}
-            <a href="{% url 'blog:blog-home' %}" class="text-xl font-bold text-gray-800">My Awesome Blog</a>
-            <div>
-                {% if user.is_authenticated %}
-                    {# Using 'accounts:profile' namespace #}
-                    <a href="{% url 'accounts:profile' user.username %}" class="text-gray-600 hover:text-gray-800 mr-4">Profile</a>
-                    {# Using 'blog:post_new' namespace #}
-                    <a href="{% url 'blog:post_new' %}" class="text-gray-600 hover:text-gray-800 mr-4">New Post</a>
-                    {# Using 'accounts:logout' namespace #}
-                    <a href="{% url 'accounts:logout' %}" class="text-gray-600 hover:text-gray-800">Logout</a>
-                {% else %}
-                    {# Using 'accounts:login' namespace #}
-                    <a href="{% url 'accounts:login' %}" class="text-gray-600 hover:text-gray-800 mr-4">Login</a>
-                    {# Using 'accounts:register' namespace #}
-                    <a href="{% url 'accounts:register' %}" class="text-gray-600 hover:text-gray-800">Register</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="container mx-auto mt-8 p-4">
-        {# Display messages here, e.g., success messages after creating a post #}
+<body>
+    <div id="content">
+        {# Display Django messages (success, error, etc.) #}
         {% if messages %}
-            {% for message in messages %}
-                <div class="p-4 mb-4 rounded-lg
-                    {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-400
-                    {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-400
-                    {% elif message.tags == 'info' %}bg-blue-100 text-blue-800 border border-blue-400
-                    {% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 border border-yellow-400
-                    {% else %}bg-gray-100 text-gray-800 border border-gray-400{% endif %}"
-                    role="alert">
-                    {{ message }}
-                </div>
-            {% endfor %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
         {% endif %}
-        {% block content %}{# Content from child templates will go here #}{% endblock content %}
-    </main>
 
-    <!-- Footer -->
-    <footer class="mt-12 p-4 text-center text-gray-600 text-sm">
-        &copy; 2023 My Blog. All rights reserved.
-    </footer>
+        {% block content %}
+        {% endblock %}
+    </div>
+    <div id="sidebar">
+        <h2>My blog</h2>
+        <p>This is my blog.</p>
+        {# Example of using a custom template tag: {% show_latest_posts %} #}
+        {# Example for most commented posts (if you implement a sidebar for it) #}
+        {% get_most_commented_posts as most_commented_posts %} {# <--- This line is now active #}
+        <h3>Most commented posts</h3>
+        <ul>
+            {% for post in most_commented_posts %}
+                <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>

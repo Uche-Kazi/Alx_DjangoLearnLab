@@ -1,14 +1,18 @@
+# django_blog/urls.py
+
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
+    # Admin site URLs
     path('admin/', admin.site.urls),
-    path('', include('blog.urls')), # Include blog app URLs for the home page
-    path('accounts/', include('accounts.urls')), # Include accounts app URLs under /accounts/
-]
 
-# Serve media files in development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Allauth URLs for authentication (login, logout, signup, etc.)
+    path('accounts/', include('allauth.urls')),
+
+    # Blog application URLs:
+    # This line now exclusively handles routing for your blog app,
+    # making the blog post list accessible at the root URL (http://127.0.0.1:8000/).
+    # The 'namespace='blog' is defined here once.
+    path('', include('blog.urls', namespace='blog')),
+]

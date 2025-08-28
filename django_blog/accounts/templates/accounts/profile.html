@@ -1,71 +1,24 @@
-<!-- ~/Alx_DjangoLearnLab/django_blog/accounts/templates/accounts/profile.html -->
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for 'Inter' font */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 sm:mx-auto">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">User Profile</h2>
-
-        <!-- Profile Picture Section -->
-        <div class="flex flex-col items-center mb-6">
-            {% if user.profile.image %}
-                <img src="{{ user.profile.image.url }}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-indigo-500 shadow-md">
-            {% else %}
-                <!-- Placeholder image if no profile picture -->
-                <img src="https://placehold.co/128x128/a78bfa/ffffff?text=No+Image" alt="Placeholder" class="w-32 h-32 rounded-full object-cover border-4 border-indigo-500 shadow-md">
-            {% endif %}
-            <h3 class="mt-4 text-xl font-semibold text-gray-700">{{ user.username }}</h3>
-            <p class="text-gray-500 text-sm">{{ user.email }}</p>
-        </div>
-
-        <!-- User Information -->
-        <div class="mb-6">
-            <h4 class="text-lg font-bold text-gray-800 mb-3">About Me</h4>
-            <div class="space-y-2">
-                <p><strong class="text-gray-700">First Name:</strong> {{ user.first_name|default:"N/A" }}</p>
-                <p><strong class="text-gray-700">Last Name:</strong> {{ user.last_name|default:"N/A" }}</p>
-                <p><strong class="text-gray-700">Bio:</strong> {{ user.profile.bio|default:"No bio provided." }}</p>
-                <p><strong class="text-gray-700">Location:</strong> {{ user.profile.location|default:"N/A" }}</p>
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="content-section p-6 bg-white shadow-lg rounded-lg max-w-lg mx-auto my-8">
+        <div class="media flex items-center mb-4 pb-4 border-b border-gray-200">
+            <img class="rounded-full h-24 w-24 mr-4 object-cover" src="{{ user.profile.image.url }}" alt="User profile picture">
+            <div class="media-body">
+                <h2 class="account-heading text-3xl font-bold text-gray-800">{{ user.username }}</h2>
+                <p class="text-gray-600 text-lg">{{ user.email }}</p>
             </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-col space-y-3">
-            <a href="{% url 'blog:profile_edit' %}" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300 text-center font-medium">
-                Edit Profile
-            </a>
-            <a href="{% url 'blog:home' %}" class="w-full bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-300 text-center font-medium">
-                Back to Home
-            </a>
-        </div>
-
-        <!-- Display Messages -->
-        {% if messages %}
-            <div class="mt-6">
-                {% for message in messages %}
-                    <div class="p-3 mb-2 {% if message.tags %}alert-{{ message.tags }}{% endif %} rounded-md
-                        {% if 'success' in message.tags %}bg-green-100 text-green-800{% endif %}
-                        {% if 'error' in message.tags %}bg-red-100 text-red-800{% endif %}
-                        {% if 'info' in message.tags %}bg-blue-100 text-blue-800{% endif %}
-                        {% if 'warning' in message.tags %}bg-yellow-100 text-yellow-800{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            <fieldset class="form-group border-b pb-4 mb-4 border-gray-200">
+                <legend class="border-bottom pb-2 mb-4 text-2xl font-semibold text-gray-700">Profile Info</legend>
+                <!-- This is where your UserUpdateForm and ProfileUpdateForm would go -->
+                <!-- For now, we'll just display some basic info -->
+                <p>Welcome to your profile page, {{ user.username }}!</p>
+                <p>You can add forms here later to update user and profile details.</p>
+            </fieldset>
+            <!-- No update button for now, as there are no forms to submit -->
+        </form>
     </div>
-</body>
-</html>
+{% endblock content %}
