@@ -8,7 +8,7 @@ from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin # Import Mixins
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .models import Post, Comment
 from .forms import EmailPostForm, CommentForm
@@ -45,7 +45,7 @@ class UserPostListView(ListView):
         return context
 
 # --- Post Detail View (Modified to handle comments indirectly) ---
-def post_detail(request, year, month, day, post_slug): # Renamed 'post' to 'post_slug' for clarity
+def post_detail(request, year, month, day, post_slug):
     post = get_object_or_404(Post,
                              status=Post.Status.PUBLISHED,
                              publish__year=year,
@@ -54,72 +54,72 @@ def post_detail(request, year, month, day, post_slug): # Renamed 'post' to 'post
                              slug=post_slug)
 
     comments = post.comments.filter(active=True)
-    # The comment form will now be handled by CommentCreateView.
-    # We still need to pass a blank form for display if the user is authenticated.
     comment_form = CommentForm()
 
     return render(request,
                   'blog/post/detail.html',
                   {'post': post,
                    'comments': comments,
-                   'comment_form': comment_form, # Pass the blank form for display
+                   'comment_form': comment_form,
                    })
 
 
-# --- NEW: Class-Based View for Creating Comments ---
+# --- Class-Based View for Creating Comments ---
 class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
-    template_name = 'blog/comment_form.html' # A generic template for the form
+    template_name = 'blog/comment_form.html'
 
     def form_valid(self, form):
         # Set the author and post before saving
-        post_id = self.kwargs.get('post_id')
-        post = get_object_or_404(Post, pk=post_id)
+        post_pk = self.kwargs.get('pk') # <--- ADJUSTED: get 'pk' instead of 'post_id'
+        post = get_object_or_404(Post, pk=post_pk)
         form.instance.author = self.request.user
         form.instance.post = post
         messages.success(self.request, 'Your comment has been posted successfully.')
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post_pk = self.kwargs.get('pk')
+        context['post'] = get_object_or_404(Post, pk=post_pk)
+        return context
+
     def get_success_url(self):
         # Redirect back to the post detail page
-        post = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
-        return post.get_absolute_url() + '#comments-section' # Redirect to comments section
+        post = get_object_or_404(Post, pk=self.kwargs.get('pk'))
+        return post.get_absolute_url() + '#comments-section'
 
 
-# --- NEW: Class-Based View for Updating Comments ---
+# --- Class-Based View for Updating Comments ---
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
     form_class = CommentForm
-    template_name = 'blog/comment_form.html' # Reuse the generic form template
+    template_name = 'blog/comment_form.html'
 
     def test_func(self):
-        # Ensure only the author can update their comment
         comment = self.get_object()
         return comment.author == self.request.user
 
     def get_success_url(self):
-        # Redirect back to the post detail page
         comment = self.get_object()
         messages.success(self.request, 'Your comment has been updated successfully.')
         return comment.post.get_absolute_url() + '#comment-' + str(comment.pk)
 
 
-# --- NEW: Class-Based View for Deleting Comments ---
+# --- Class-Based View for Deleting Comments ---
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment
-    template_name = 'blog/comment_confirm_delete.html' # A generic confirmation template
+    template_name = 'blog/comment_confirm_delete.html'
 
     def test_func(self):
-        # Ensure only the author can delete their comment
         comment = self.get_object()
         return comment.author == self.request.user
 
     def get_success_url(self):
-        # Redirect back to the post detail page after deletion
         comment = self.get_object()
         messages.success(self.request, 'Your comment has been deleted successfully.')
-        return comment.post.get_absolute_url() + '#comments-section' # Redirect to comments section
+        return comment.post.get_absolute_url() + '#comments-section'
 
 # --- Post Share View (remains the same) ---
 def post_share(request, post_id):
@@ -142,4 +142,3 @@ def post_share(request, post_id):
         form = EmailPostForm()
 
     return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
-

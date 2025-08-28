@@ -64,7 +64,7 @@
         {% if user.is_authenticated %}
             <h3>Add a new comment</h3>
             <p>
-                <a href="{% url 'blog:comment_create' post.id %}" class="btn btn-primary">Post a Comment</a> {# New link to create view #}
+                <a href="{% url 'blog:comment_create' post.id %}" class="btn btn-primary">Post a Comment</a> {# Updated: use post.id as pk #}
             </p>
         {% else %}
             <p>
