@@ -1,7 +1,6 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
 {% load static %}
-
 {% block title %}{{ post.title }}{% endblock %}
 
 {% block content %}
@@ -10,67 +9,48 @@
         Published {{ post.publish|date:"F j, Y" }} by {{ post.author }}
     </p>
     {{ post.body|markdown }}
-
-    {# Display a message if available #}
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-                    {{ message }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    <p>
-        <a href="{% url 'blog:post_share' post.id %}">
-            Share this post
+    
+    <p class="tags">
+      Tags:
+      {% for tag in post.tags.all %}
+        <a href="{% url "blog:post_list_by_tag" tag.slug %}">
+          {{ tag.name }}
         </a>
+        {% if not forloop.last %}, {% endif %}
+      {% endfor %}
     </p>
 
     <h2>Similar posts</h2>
     {% for post in similar_posts %}
-        <p>
-            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-        </p>
+      <p>
+        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+      </p>
     {% empty %}
-        There are no similar posts yet.
+      There are no similar posts yet.
     {% endfor %}
 
-    {# --- Comments Section --- #}
-    <div id="comments-section">
-        <h2>{{ comments.count }} comment{{ comments.count|pluralize }}</h2>
+    <h2>{{ post.comments.count }} comment{{ post.comments.count|pluralize }}</h2>
+    {% for comment in post.comments.all %}
+      <div class="comment">
+        <p class="info">
+          Comment {{ forloop.counter }} by {{ comment.name }}
+          {{ comment.created|date:"F j, Y" }}
+        </p>
+        {{ comment.body|markdown }}
+      </div>
+    {% empty %}
+      <p>There are no comments yet.</p>
+    {% endfor %}
 
-        {% for comment in comments %}
-            <div class="comment" id="comment-{{ comment.pk }}">
-                <p class="info">
-                    <strong>{{ comment.author.username }}</strong> commented
-                    {{ comment.created_at|timesince }} ago
-                    {% if comment.author == request.user %}
-                        {# Only show edit/delete links if the logged-in user is the comment author #}
-                        <span class="comment-actions">
-                            | <a href="{% url 'blog:comment_update' comment.pk %}">Edit</a> {# Updated URL #}
-                            | <a href="{% url 'blog:comment_delete' comment.pk %}">Delete</a> {# Updated URL #}
-                        </span>
-                    {% endif %}
-                </p>
-                {{ comment.content|linebreaks }} {# Display content with line breaks #}
-            </div>
-        {% empty %}
-            <p>There are no comments yet.</p>
-        {% endfor %}
-
-        {# --- Link to Add Comment Form (handled by CommentCreateView) --- #}
-        {% if user.is_authenticated %}
-            <h3>Add a new comment</h3>
-            <p>
-                <a href="{% url 'blog:comment_create' post.id %}" class="btn btn-primary">Post a Comment</a> {# Updated: use post.id as pk #}
-            </p>
-        {% else %}
-            <p>
-                <a href="{% url 'account_login' %}?next={{ request.path }}">Log in</a> to post a comment.
-            </p>
-        {% endif %}
-    </div>
+    {% if new_comment %}
+      <h2>Your comment has been added.</h2>
+    {% else %}
+      <h2>Add a new comment</h2>
+      <form method="post">
+        {{ comment_form.as_p }}
+        {% csrf_token %}
+        <p><input type="submit" value="Add comment"></p>
+      </form>
+    {% endif %}
 
 {% endblock %}

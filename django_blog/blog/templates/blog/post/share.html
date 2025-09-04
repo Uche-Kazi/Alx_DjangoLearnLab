@@ -1,7 +1,6 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "blog/base.html" %}
 
-{% block title %}Share Post{% endblock %}
+{% block title %}Share a post{% endblock %}
 
 {% block content %}
     {% if sent %}
@@ -11,10 +10,10 @@
         </p>
     {% else %}
         <h1>Share "{{ post.title }}" by e-mail</h1>
-        <form method="post">
+        <form action="{% url "blog:post_share" post.id %}" method="post">
             {{ form.as_p }}
             {% csrf_token %}
-            <p><input type="submit" value="Send e-mail"></p>
+            <input type="submit" value="Send e-mail">
         </form>
     {% endif %}
 {% endblock %}

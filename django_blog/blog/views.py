@@ -1,144 +1,98 @@
-# blog/views.py
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy, reverse
-from django.contrib import messages
-from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-
+from django.db.models import Count
 from .models import Post, Comment
-from .forms import EmailPostForm, CommentForm
+from .forms import CommentForm, PostSearchForm
+from taggit.models import Tag
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.db.models import Q
 
-# --- Helper function for comment author check (Still useful for function-based views if any remain) ---
-def is_comment_author(user, comment):
+
+def post_list(request, tag_slug=None):
     """
-    Checks if the given user is the author of the comment.
+    View to list all published blog posts, with optional filtering by tag.
     """
-    return comment.author == user
+    object_list = Post.published.all()
+    tag = None
 
-# --- Existing Post List View ---
-class PostListView(ListView):
-    queryset = Post.published.all()
-    context_object_name = 'posts'
-    paginate_by = 3
-    template_name = 'blog/post/list.html'
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        object_list = object_list.filter(tags__in=[tag])
 
-# --- User-Specific Post List View ---
-class UserPostListView(ListView):
-    model = Post
-    template_name = 'blog/post/list.html'
-    context_object_name = 'posts'
-    paginate_by = 3
+    paginator = Paginator(object_list, 3) # 3 posts per page
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer deliver the first page
+        posts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range deliver last page of results
+        posts = paginator.page(paginator.num_pages)
+    return render(request,
+                  'blog/post/list.html',
+                  {'page': page,
+                   'posts': posts,
+                   'tag': tag})
 
-    def get_queryset(self):
-        username = self.kwargs.get('username')
-        user = get_object_or_404(User, username=username)
-        return Post.published.filter(author=user).order_by('-publish')
+def post_detail(request, year, month, day, post):
+    """
+    View to display a single post, its comments, and a comment form.
+    """
+    # Retrieve the post object or return a 404 if not found
+    post = get_object_or_404(Post, slug=post,
+                                   status='published',
+                                   publish__year=year,
+                                   publish__month=month,
+                                   publish__day=day)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_user'] = get_object_or_404(User, username=self.kwargs.get('username'))
-        return context
-
-# --- Post Detail View (Modified to handle comments indirectly) ---
-def post_detail(request, year, month, day, post_slug):
-    post = get_object_or_404(Post,
-                             status=Post.Status.PUBLISHED,
-                             publish__year=year,
-                             publish__month=month,
-                             publish__day=day,
-                             slug=post_slug)
-
+    # Get all active comments for this post
     comments = post.comments.filter(active=True)
-    comment_form = CommentForm()
+    new_comment = None
+
+    if request.method == 'POST':
+        # A comment was posted
+        comment_form = CommentForm(data=request.POST)
+        if comment_form.is_valid():
+            # Create Comment object but don't save to database yet
+            new_comment = comment_form.save(commit=False)
+            # Assign the current post to the comment
+            new_comment.post = post
+            # Save the comment to the database
+            new_comment.save()
+    else:
+        comment_form = CommentForm()
+
+    # Retrieve a list of similar posts
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
 
     return render(request,
                   'blog/post/detail.html',
                   {'post': post,
                    'comments': comments,
+                   'new_comment': new_comment,
                    'comment_form': comment_form,
-                   })
+                   'similar_posts': similar_posts})
 
+def post_search(request):
+    """
+    View to handle post searches.
+    """
+    form = PostSearchForm()
+    query = None
+    results = []
 
-# --- Class-Based View for Creating Comments ---
-class CommentCreateView(LoginRequiredMixin, CreateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = 'blog/comment_form.html'
-
-    def form_valid(self, form):
-        # Set the author and post before saving
-        post_pk = self.kwargs.get('pk') # <--- ADJUSTED: get 'pk' instead of 'post_id'
-        post = get_object_or_404(Post, pk=post_pk)
-        form.instance.author = self.request.user
-        form.instance.post = post
-        messages.success(self.request, 'Your comment has been posted successfully.')
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        post_pk = self.kwargs.get('pk')
-        context['post'] = get_object_or_404(Post, pk=post_pk)
-        return context
-
-    def get_success_url(self):
-        # Redirect back to the post detail page
-        post = get_object_or_404(Post, pk=self.kwargs.get('pk'))
-        return post.get_absolute_url() + '#comments-section'
-
-
-# --- Class-Based View for Updating Comments ---
-class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = 'blog/comment_form.html'
-
-    def test_func(self):
-        comment = self.get_object()
-        return comment.author == self.request.user
-
-    def get_success_url(self):
-        comment = self.get_object()
-        messages.success(self.request, 'Your comment has been updated successfully.')
-        return comment.post.get_absolute_url() + '#comment-' + str(comment.pk)
-
-
-# --- Class-Based View for Deleting Comments ---
-class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Comment
-    template_name = 'blog/comment_confirm_delete.html'
-
-    def test_func(self):
-        comment = self.get_object()
-        return comment.author == self.request.user
-
-    def get_success_url(self):
-        comment = self.get_object()
-        messages.success(self.request, 'Your comment has been deleted successfully.')
-        return comment.post.get_absolute_url() + '#comments-section'
-
-# --- Post Share View (remains the same) ---
-def post_share(request, post_id):
-    post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
-    sent = False
-
-    if request.method == 'POST':
-        form = EmailPostForm(request.POST)
+    if 'query' in request.GET:
+        form = PostSearchForm(request.GET)
         if form.is_valid():
-            cd = form.cleaned_data
-            post_url = request.build_absolute_uri(post.get_absolute_url())
-            subject = f"{cd['name']} recommends you read {post.title}"
-            message = f"Read {post.title} at {post_url}\n\n" \
-                      f"{cd['name']}'s comments: {cd['comments']}"
-            send_mail(subject, message, 'your_account@gmail.com', [cd['to']])
-            sent = True
-        else:
-            messages.error(request, 'There was an error sending the email. Please check the form.')
-    else:
-        form = EmailPostForm()
+            query = form.cleaned_data['query']
+            # Search using a simple OR query on title and body
+            results = Post.published.filter(Q(title__icontains=query) | Q(body__icontains=query))
 
-    return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
+    return render(request,
+                  'blog/post/search.html',
+                  {'form': form,
+                   'query': query,
+                   'results': results})

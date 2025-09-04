@@ -1,30 +1,17 @@
-# blog/forms.py
-
 from django import forms
 from .models import Comment
 
-class EmailPostForm(forms.Form):
-    """
-    A form for sharing a post via email.
-    It includes fields for the sender's name and email,
-    the recipient's email, and optional comments.
-    """
-    name = forms.CharField(max_length=25)
-    email = forms.EmailField()
-    to = forms.EmailField()
-    comments = forms.CharField(required=False, widget=forms.Textarea)
-
 class CommentForm(forms.ModelForm):
     """
-    A ModelForm for creating new comments.
-    It automatically saves the data to the Comment model.
+    A form for users to submit comments on blog posts.
+    It uses the Comment model and only includes the 'name', 'email', and 'body' fields.
     """
     class Meta:
         model = Comment
-        # The 'content' field is the only one users will directly input.
-        # 'post' and 'author' will be set in the view.
-        fields = ['content']
-        widgets = {
-            'content': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Write your comment here...'}),
-        }
+        fields = ('name', 'email', 'body')
 
+class PostSearchForm(forms.Form):
+    """
+    A simple form for searching blog posts by keywords.
+    """
+    query = forms.CharField()

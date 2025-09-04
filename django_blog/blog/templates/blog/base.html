@@ -1,39 +1,41 @@
+{% load blog_tags %}
 {% load static %}
-{% load blog_tags %} {# <--- ADD THIS LINE #}
 <!DOCTYPE html>
 <html>
 <head>
     <title>{% block title %}{% endblock %}</title>
-    <link href="{% static 'css/blog.css' %}" rel="stylesheet">
+    <link href="{% static "css/blog.css" %}" rel="stylesheet">
 </head>
 <body>
     <div id="content">
-        {# Display Django messages (success, error, etc.) #}
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-                        {{ message }}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
         {% block content %}
         {% endblock %}
     </div>
     <div id="sidebar">
         <h2>My blog</h2>
-        <p>This is my blog.</p>
-        {# Example of using a custom template tag: {% show_latest_posts %} #}
-        {# Example for most commented posts (if you implement a sidebar for it) #}
-        {% get_most_commented_posts as most_commented_posts %} {# <--- This line is now active #}
+        <p>This is my blog. I've written {% total_posts %} posts so far.</p>
+        <h3>Latest posts</h3>
+        {% show_latest_posts 3 %}
         <h3>Most commented posts</h3>
+        {% get_most_commented_posts as most_commented_posts %}
         <ul>
             {% for post in most_commented_posts %}
-                <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></li>
+                <li>
+                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </li>
             {% endfor %}
         </ul>
+        <h3>Tags</h3>
+        <p class="tags">
+            {% show_tags %}
+        </p>
+        <div id="search">
+            <h3>Search</h3>
+            <form action="{% url "blog:post_search" %}" method="get">
+                <input type="text" name="query" placeholder="Search posts...">
+                <input type="submit" value="Search">
+            </form>
+        </div>
     </div>
 </body>
 </html>

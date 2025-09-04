@@ -1,18 +1,31 @@
-# django_blog/urls.py
+"""
+URL configuration for django_blog project.
 
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
-    # Admin site URLs
     path('admin/', admin.site.urls),
-
-    # Allauth URLs for authentication (login, logout, signup, etc.)
+    path('blog/', include('blog.urls', namespace='blog')),
     path('accounts/', include('allauth.urls')),
-
-    # Blog application URLs:
-    # This line now exclusively handles routing for your blog app,
-    # making the blog post list accessible at the root URL (http://127.0.0.1:8000/).
-    # The 'namespace='blog' is defined here once.
-    path('', include('blog.urls', namespace='blog')),
+    # The 'markdownx' app requires its URL patterns to be included to function.
+    path('markdownx/', include('markdownx.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
