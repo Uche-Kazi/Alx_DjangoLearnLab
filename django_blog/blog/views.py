@@ -1,31 +1,35 @@
 from django.shortcuts import render, get_object_or_404
-from django.views import generic
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.generic import ListView
+from django.db.models import Q
 from .models import Post, Comment
 from .forms import CommentForm
-from django.db.models import Q
 
-class PostList(generic.ListView):
-    queryset = Post.objects.filter(status=1).order_by('-created_on')
-    template_name = 'index.html'
+class PostList(ListView):
+    queryset = Post.published.all()
+    context_object_name = 'posts'
     paginate_by = 3
+    template_name = 'blog/post/list.html'
 
     def get_queryset(self):
-        # Start with the base queryset of published posts.
         queryset = super().get_queryset()
-
-        # Check for a search query.
-        if 'q' in self.request.GET:
-            # Get the search term and apply filters to both content and tags.
-            q = self.request.GET['q']
+        query = self.request.GET.get('q')
+        if query:
+            # Use Q objects to combine search on multiple fields with OR logic
             queryset = queryset.filter(
-                Q(content__icontains=q) | Q(tags__name__icontains=q)
-            ).distinct()
-        
+                Q(title__icontains=query) | Q(body__icontains=query)
+            )
         return queryset
 
-def post_detail(request, slug):
-    template_name = 'post_detail.html'
-    post = get_object_or_404(Post, slug=slug)
+def post_detail(request, year, month, day, post):
+    post = get_object_or_404(
+        Post,
+        slug=post,
+        status='published',
+        publish__year=year,
+        publish__month=month,
+        publish__day=day
+    )
     comments = post.comments.filter(active=True)
     new_comment = None
     if request.method == 'POST':
@@ -37,7 +41,13 @@ def post_detail(request, slug):
     else:
         comment_form = CommentForm()
 
-    return render(request, template_name, {'post': post,
-                                           'comments': comments,
-                                           'new_comment': new_comment,
-                                           'comment_form': comment_form})
+    return render(
+        request,
+        'blog/post/detail.html',
+        {
+            'post': post,
+            'comments': comments,
+            'new_comment': new_comment,
+            'comment_form': comment_form
+        }
+    )
