@@ -17,7 +17,7 @@ class PostList(ListView):
         if query:
             # Use Q objects to combine search on multiple fields with OR logic
             queryset = queryset.filter(
-                Q(title__icontains=query) | Q(body__icontains=query)
+                Q(title__icontains=query) | Q(body__icontains=query) | Q(tags__name__icontains=query)
             )
         return queryset
 
