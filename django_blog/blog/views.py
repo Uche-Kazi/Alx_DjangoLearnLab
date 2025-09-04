@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Post
-from django.db.models import Q # Import Q object for complex lookups
+from django.db.models import Q
 
 def post_list(request):
     """
@@ -13,9 +13,11 @@ def post_list(request):
     if query:
         # If a search query exists, filter the posts.
         # The Q object is used to perform a case-insensitive search across
-        # both the 'title' and 'content' fields.
+        # the 'title', 'content', and the 'name' of the associated tags.
         posts = posts.filter(
-            Q(title__icontains=query) | Q(content__icontains=query)
+            Q(title__icontains=query) |
+            Q(content__icontains=query) |
+            Q(tags__name__icontains=query)
         ).distinct()
 
     context = {
