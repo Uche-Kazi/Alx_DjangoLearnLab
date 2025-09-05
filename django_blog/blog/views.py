@@ -1,23 +1,31 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from .models import Post
+from django.db.models import Q
 
 def post_list(request):
     """
-    A view to display a list of published blog posts.
+    View to display a list of blog posts with
+    optional search functionality.
     """
-    # Use Post.objects.filter() to get a queryset of all published posts.
-    # The 'status' field is assumed to exist on the Post model.
-    posts = Post.objects.filter(status='published').order_by('-publish')
-    return render(request, 'blog/post_list.html', {'posts': posts})
+    # Initialize a queryset of all posts.
+    posts = Post.objects.all().order_by('-published_date')
+    query = request.GET.get('q')
 
-def post_detail(request, year, month, day, post):
-    """
-    A view to display a single blog post.
-    """
-    post = get_object_or_404(Post,
-                             status='published',
-                             slug=post,
-                             publish__year=year,
-                             publish__month=month,
-                             publish__day=day)
-    return render(request, 'blog/post_detail.html', {'post': post})
+    if query:
+        # If a search query exists,
+        # filter the posts.
+        # The Q object is used to
+        # perform a case-insensitive search across
+        # the 'title', 'content', and
+        # the 'name' of the associated tags.
+        posts = posts.filter(
+            Q(title__icontains=query) |
+            Q(content__icontains=query) |
+            Q(tags__name__icontains=query)
+        ).distinct()
+
+    context = {
+        'posts': posts,
+        'query': query,
+    }
+    return render(request, 'blog/post_list.html', context)
