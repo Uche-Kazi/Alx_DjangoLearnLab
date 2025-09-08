@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Posts by {{ view.kwargs.username }} ({{ page_obj.paginator.count }})</h1>
+
+    {% for post in posts %}
+        <article class="bg-white p-6 rounded-lg shadow-md mb-6 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+            <img class="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 flex-shrink-0" src="{{ post.author.profile.image.url }}" alt="Profile picture">
+            
+            <div class="flex-grow">
+                <div class="mb-2">
+                    <a class="text-indigo-600 hover:text-indigo-800 font-semibold text-lg mr-2" href="{% url 'blog:user-posts' post.author.username %}">{{ post.author }}</a>
+                    <small class="text-gray-500 text-sm">{{ post.published_date|date:"F d, Y" }}</small>
+                </div>
+                
+                {# DISTINCT POST TITLE #}
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    <a class="hover:text-indigo-700 transition-colors duration-200" href="{% url 'blog:post-detail' post.slug %}">{{ post.title }}</a>
+                </h2>
+                
+                {# DISTINCT POST CONTENT #}
+                <p class="text-gray-700 leading-relaxed text-base">{{ post.content }}</p>
+            </div>
+        </article>
+    {% endfor %}
+
+    {# Pagination controls #}
+    {% if is_paginated %}
+        <div class="flex justify-center items-center mt-8 space-x-2">
+            {% if page_obj.has_previous %}
+                <a class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" href="{% url 'blog:user-posts' view.kwargs.username %}?page=1">First</a>
+                <a class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" href="{% url 'blog:user-posts' view.kwargs.username %}?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <a class="px-4 py-2 bg-indigo-700 text-white font-bold rounded-md cursor-default" href="{% url 'blog:user-posts' view.kwargs.username %}?page={{ num }}">{{ num }}</a>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" href="{% url 'blog:user-posts' view.kwargs.username %}?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" href="{% url 'blog:user-posts' view.kwargs.username %}?page={{ page_obj.next_page_number }}">Next</a>
+                <a class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-600 focus:ring-white" href="{% url 'blog:user-posts' view.kwargs.username %}?page={{ page_obj.paginator.num_pages }}">Last</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock content %}

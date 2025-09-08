@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Comment{% endblock %}
+
+{% block content %}
+    <h1>Edit Your Comment</h1>
+    <p>Editing comment on post: "{{ comment.post.title }}"</p>
+
+    {# Display a message if available #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form action="" method="post">
+        {{ form.as_p }}
+        {% csrf_token %}
+        <p><input type="submit" value="Update Comment"></p>
+    </form>
+    <p><a href="{{ comment.post.get_absolute_url }}">Cancel</a></p>
+{% endblock %}

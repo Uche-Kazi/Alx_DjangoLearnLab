@@ -1,0 +1,13 @@
+    /* accounts.css: Custom styles for the accounts app */
+
+    /* Apply a distinct border to all input fields within forms in the accounts app */
+    /* This helps visually confirm the CSS is loading */
+    .bg-white input[type="email"],
+    .bg-white input[type="text"],
+    .bg-white input[type="password"],
+    .bg-white input[type="date"],
+    .bg-white input[type="file"] {
+        border: 2px solid #a8c7f7; /* Light blue border to stand out */
+        box-shadow: 0 0 5px rgba(168, 199, 247, 0.5); /* Subtle shadow */
+    }
+    

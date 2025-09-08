@@ -1,0 +1,35 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+    <h1>Delete Comment</h1>
+    <p>Are you sure you want to delete your comment?</p>
+
+    <div class="comment-to-delete">
+        <strong>On Post:</strong> "{{ object.post.title }}"<br> {# Use 'object' for generic DeleteView #}
+        <strong>Your Comment:</strong>
+        <blockquote style="border-left: 3px solid #ccc; padding-left: 10px; margin: 10px 0;">
+            {{ object.content|linebreaks }}
+        </blockquote>
+    </div>
+
+    {# Display Django messages #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            <input type="submit" value="Confirm Delete" style="background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            <a href="{{ object.post.get_absolute_url }}" style="margin-left: 10px; text-decoration: none; color: #007bff;">Cancel</a>
+        </p>
+    </form>
+{% endblock %}
