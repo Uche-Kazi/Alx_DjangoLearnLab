@@ -1,10 +1,16 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+
+# Import the new view from the same directory
+from .views import hello_world_view  
 
 urlpatterns = [
-    # Admin site URL
-    path('admin/', admin.site.urls),
+    # The default Django admin site
+    path("admin/", admin.site.urls),
     
-    # Include the URL patterns from the accounts app under the /api/accounts/ path
-    path('api/accounts/', include('accounts.urls')),
+    # Existing API accounts path (currently empty, but you can add to it later)
+    # path("api/accounts/", ),
+    
+    # This is the new path for the homepage (the empty string "" maps to the root URL)
+    path("", hello_world_view),
 ]
