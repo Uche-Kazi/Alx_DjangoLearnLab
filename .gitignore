@@ -24,3 +24,4 @@ local_settings.py
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+.env
