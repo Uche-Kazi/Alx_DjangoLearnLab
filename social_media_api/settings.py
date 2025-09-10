@@ -118,6 +118,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+<<<<<<< HEAD
 
 # Custom user model setting
 # AUTH_USER_MODEL = 'accounts.User'
+=======
+>>>>>>> 1bbf6deb52f8e292397419e3b8a1dc2c44b8c68e
